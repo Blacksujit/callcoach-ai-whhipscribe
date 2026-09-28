@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "callcoach": {
+      "command": "python",
+      "args": ["src/mcp_server.py"],
+      "env": {
+        "WHIPSKRIBE_API_KEY": "${WHIPSKRIBE_API_KEY}",
+        "GROQ_API_KEY": "${GROQ_API_KEY}",
+        "LLM_PROVIDER": "${LLM_PROVIDER}",
+        "LLM_MODEL": "${LLM_MODEL}"
+      }
+    }
+  }
+}

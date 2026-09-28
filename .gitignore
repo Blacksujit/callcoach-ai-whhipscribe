@@ -1,0 +1,37 @@
+# Environment secrets — NEVER COMMIT
+.env
+*.local
+
+# Generated reports
+report.md
+report_real.md
+test_report.md
+
+# Test scripts and temp files
+test_api.py
+test_llm.py
+test_openai.py
+test_anthropic.py
+src/test_audio.wav
+src/test_speech.wav
+
+# Python venv
+.venv/
+__pycache__/
+*.pyc
+
+# Frontend build artifacts
+frontend/.next/
+frontend/node_modules/
+
+report_test.md
+
+# Web dashboard
+evaluations.db
+uploads/
+
+# Local server log
+backend.log
+
+# Frontend working files
+frontend/test-results/
