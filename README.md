@@ -8,6 +8,112 @@ CallCoach-AI turns any founder-investor, customer-success, or sales call into a 
 
 Across multiple calls, the same pipeline shows whether quality is improving, stagnating, or repeating the same mistakes — and produces prescriptive coaching recommendations.
 
+
+## Architecture
+
+
+```mermaid
+graph TB
+    subgraph USER
+        U["Sales Manager / Team Lead\nSarah @ 10M ARR SaaS"]
+    end
+
+    subgraph "Input Layer"
+        AUDIO["🎙️ Audio Recording\n(mic, file)"]
+        URL["🔗 YouTube / Podcast / Drive Link"]
+        MCP["📚 WhipScribe MCP Server\n(Library scan / search)"]
+    end
+
+    subgraph "WhipScribe API"
+        WFApi["POST /transcribe\nGET /jobs/{id} (poll)\nGET /jobs/{id}/result\nGET /jobs/{id}/clips/candidates\nGET /jobs/{id}/audio/url"]
+    end
+
+    subgraph "Processing Core"
+        EVAL["📊 Evaluation Engine\nLLM-as-Judge + Rule-Based Fallback\n\nAction Items | Clarity\nTension | Compliance\n+ Timestamped Evidence"]
+        STORE[(SQLite\nEvaluation Store\nper-meeting results)]
+    end
+
+    subgraph "THE DIFFERENTIATOR"
+        TREN["📈 Trend Analysis Engine\n\nCross-meeting quality trends\nAction item lifecycle tracking\nRecurring issue detection\nCoaching insights engine\nTeam vs individual patterns\nWeak-spot weighting"]
+    end
+
+    subgraph "Delivery Layer"
+        REPORT["📝 Markdown QA Report"]
+        WEB["🖥️ Web Dashboard\n/trends · /coach · /report/:id"]
+        NOTION["📋 Notion Page"]
+        SLACK["💬 Slack Digest"]
+        EMAIL["📧 Email Summary"]
+        TASKS["✅ Todoist/Trello\nAuto-task from action items"]
+    end
+
+    U --> AUDIO
+    U --> URL
+    U --> MCP
+
+    AUDIO --> WFApi
+    URL --> WFApi
+    MCP --> WFApi
+
+    WFApi -->|transcript JSON| EVAL
+    EVAL --> STORE
+    STORE --> TREN
+    TREN -->|insights + trends| STORE
+
+    EVAL --> REPORT
+    TREN --> REPORT
+    REPORT --> WEB
+    REPORT --> NOTION
+    REPORT --> SLACK
+    REPORT --> EMAIL
+    TREN --> TASKS
+```
+
+### Layer-wise Arcitecture:
+
+```mermaid
+graph LR
+    subgraph "Adapters (Frameworks)"
+        CLI["CLI / Web UI\n(Flask)"]
+        WHIP["WhipScribe API\nClient"]
+        LLM["LLM Client\n(OpenAI/Anthropic)"]
+        NOTION_AD["Notion Adapter"]
+        SLACK_AD["Slack Adapter"]
+    end
+
+    subgraph "Application Services"
+        EVAL_UC["Evaluate Meeting\n(Use Case)"]
+        TREND_UC["Analyze Trends\n(Use Case)"]
+        COACH_UC["Generate Coaching\n(Use Case)"]
+        DELIVER_UC["Deliver Report\n(Use Case)"]
+    end
+
+    subgraph "Domain (Entities)"
+        EVAL_ENTITY["Evaluation\n{scores, issues, items}"]
+        TREND_ENTITY["Trend\n{meetings[], scores[], patterns}"]
+        COACH_ENTITY["CoachingInsight\n{advice, evidence, action}"]
+        REPORT_ENTITY["Report\n{sections[], format}"]
+    end
+
+    subgraph "No Third-Party Leakage"
+        RULE["Rule-Based\nEvaluator"]
+    end
+
+    CLI --> EVAL_UC
+    CLI --> TREND_UC
+    EVAL_UC --> EVAL_ENTITY
+    EVAL_UC --> WHIP
+    EVAL_UC --> LLM
+    EVAL_UC --> RULE
+    TREND_UC --> EVAL_ENTITY
+    TREND_UC --> TREND_ENTITY
+    COACH_UC --> TREND_ENTITY
+    COACH_UC --> COACH_ENTITY
+    DELIVER_UC --> REPORT_ENTITY
+    DELIVER_UC --> NOTION_AD
+    DELIVER_UC --> SLACK_AD
+```
+
+
 ### The workflow
 
 ```
