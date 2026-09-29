@@ -143,7 +143,7 @@ npm run build    # cross-env NODE_OPTIONS=--max-old-space-size=2048 next build -
 npm start
 ```
 
-Deployed at: ![Live](https://callcoach-ai-dashboard.vercel.app)
+Deployed at: [Live](https://callcoach-ai-dashboard.vercel.app)
 
 ### Backend (Render)
 
@@ -169,24 +169,6 @@ CallCoach keeps the meeting evidence, finds recurring issues across calls, detec
 
 ---
 
-## Architecture
-
-```
-Browser / CLI / MCP
-      │
-      ▼
-Flask API (port 5000) ── SQLite (evaluations)
-      │
-      ├── POST /api/upload → WhipScribe API → transcript
-      ├── POST /api/analyze/{id} → LLM evaluator → scores + evidence
-      └── GET /api/trends-data → cross-call analysis → trends + coaching
-
-Next.js Dashboard (port 3000)
-      │
-      └── UploadArea (3 tabs: file / paste link / record audio)
-          ProcessingPipeline (live stages)
-          Pages: / /trends /coach /speakers /connections /report/:id
-```
 
 ## What works
 
