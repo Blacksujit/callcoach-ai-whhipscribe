@@ -203,7 +203,7 @@ npm run build    # cross-env NODE_OPTIONS=--max-old-space-size=2048 next build -
 npm start
 ```
 
-Deployed at: ![Live](https://callcoachai.sujit.top/)
+Deployed at: [Live](https://callcoachai.sujit.top/)
 
 ### Backend (Render)
 
