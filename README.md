@@ -31,8 +31,7 @@ graph TB
     end
 
     subgraph "Processing Core"
-        EVAL["Review and score call\nAction items | Clarity\nTension | Compliance\nTimestamped evidence"]
-        STORE[(Call results\nfor each meeting)]
+        LLM as a Judge (4 agents analyzes the report)
     end
 
     subgraph "Call Insights"
