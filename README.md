@@ -209,7 +209,6 @@ Deployed at: ![Live](https://callcoachai.sujit.top/)
 
 `render.yaml` and `Procfile` are configured. Set `WHIPSKRIBE_API_KEY`, `GROQ_API_KEY`, `FRONTEND_URL`, and `CORS_ORIGINS` in the Render dashboard.
 
-
 ---
 
 
@@ -249,4 +248,3 @@ Deployed at: ![Live](https://callcoachai.sujit.top/)
 ---
 
 *Built on the [WhipScribe API](https://whipscribe.com/docs). Own account, own recordings.*
-# Force redeploy
