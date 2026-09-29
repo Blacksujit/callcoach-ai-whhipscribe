@@ -2,12 +2,12 @@ services:
   - type: web
     name: callcoach-backend
     region: oregon
-    env: python
-    pythonVersion: "3.11"
-    buildCommand: |
-      pip install -r requirements.txt
-      pip install gunicorn
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheck:
+      path: /api/health
+      intervalSeconds: 300
     envVars:
       - key: WHIPSKRIBE_API_KEY
         sync: false
@@ -21,11 +21,7 @@ services:
         value: "https://callcoach-ai-dashboard.vercel.app,https://callcoach-ai-whhipscribe.vercel.app"
       - key: FRONTEND_URL
         value: "https://callcoach-ai-dashboard.vercel.app"
-    healthCheck:
-      path: /api/health
-      intervalSeconds: 600
-    plan: free
-    autoDeploy: true
-    regions:
-      - oregon
-
+      - key: FLASK_SECRET_KEY
+        value: "prod-secret-key-2026"
+      - key: DB_PATH
+        value: /data/callcoach.db
