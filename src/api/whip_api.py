@@ -20,7 +20,7 @@ def submit_file(api_key, filepath, language=None):
         fields["source"] = "api"
         for k, v in fields.items():
             files[k] = (None, v)
-        resp = requests.post(f"{BASE_URL}/transcribe", headers=_headers(api_key), files=files)
+        resp = requests.post(f"{BASE_URL}/transcribe", headers=_headers(api_key), files=files, timeout=30)
     resp.raise_for_status()
     return resp.json()["job_id"]
 
@@ -35,7 +35,7 @@ def submit_url(api_key, url, language=None):
     if language:
         payload["language"] = language
     payload["source"] = "url"
-    resp = requests.post(f"{BASE_URL}/transcribe/url", headers=_headers(api_key), json=payload)
+    resp = requests.post(f"{BASE_URL}/transcribe/url", headers=_headers(api_key), json=payload, timeout=30)
     resp.raise_for_status()
     return resp.json()["job_id"]
 
@@ -48,8 +48,7 @@ def poll_job(api_key, job_id, timeout=300, interval=5):
             raise TimeoutError(f"Job {job_id} timed out after {timeout}s")
 
         try:
-            resp = requests.get(f"{BASE_URL}/jobs/{job_id}", headers=_headers(api_key))
-            if resp.status_code in (502, 503, 504):
+            resp = requests.get(f"{BASE_URL}/jobs/{job_id}", headers=_headers(api_key), timeout=30)
                 print(f"  [RETRY] Server error {resp.status_code}, retrying...")
                 time.sleep(interval)
                 continue
@@ -75,6 +74,7 @@ def get_transcript(api_key, job_id, fmt="json"):
         f"{BASE_URL}/jobs/{job_id}/result",
         headers=_headers(api_key),
         params={"format": fmt},
+        timeout=30,
     )
     resp.raise_for_status()
     return resp.json()
@@ -82,21 +82,21 @@ def get_transcript(api_key, job_id, fmt="json"):
 
 def get_audio_url(api_key, job_id):
     """Get a short-lived playback URL for the original audio."""
-    resp = requests.get(f"{BASE_URL}/jobs/{job_id}/audio/url", headers=_headers(api_key))
+    resp = requests.get(f"{BASE_URL}/jobs/{job_id}/audio/url", headers=_headers(api_key), timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
 def list_jobs(api_key, limit=100):
     """List recent jobs for the given API key."""
-    resp = requests.get(f"{BASE_URL}/jobs", headers=_headers(api_key), params={"limit": limit})
+    resp = requests.get(f"{BASE_URL}/jobs", headers=_headers(api_key), params={"limit": limit}, timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
 def get_me(api_key):
     """Get account information for the given API key."""
-    resp = requests.get(f"{BASE_URL}/me", headers=_headers(api_key))
+    resp = requests.get(f"{BASE_URL}/me", headers=_headers(api_key), timeout=30)
     resp.raise_for_status()
     return resp.json()
 
@@ -106,7 +106,7 @@ def get_session_summary(api_key, job_id):
 
     Falls back gracefully if the summary endpoint is unavailable for this job.
     """
-    resp = requests.get(f"{BASE_URL}/jobs/{job_id}/summary", headers=_headers(api_key))
+    resp = requests.get(f"{BASE_URL}/jobs/{job_id}/summary", headers=_headers(api_key), timeout=30)
     if resp.status_code == 404:
         return None
     resp.raise_for_status()
@@ -123,6 +123,7 @@ def get_high_signal_moments(api_key, job_id):
         f"{BASE_URL}/jobs/{job_id}/clips/candidates",
         headers=_headers(api_key),
         params={"kind": "question"},
+        timeout=30,
     )
     if resp.status_code == 404:
         return None
