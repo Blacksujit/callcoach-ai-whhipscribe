@@ -1,6 +1,6 @@
 // API client for the CallCoach-AI Flask backend
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_FLASK_URL || "http://localhost:5000";
-
+// Uses relative URLs (/api/*) which Vercel proxies to the Render backend
+const API_BASE = "/api";
 export interface Job {
   job_id: string;
   filename: string;

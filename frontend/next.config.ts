@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/settings", destination: "/connections", permanent: false }];
   },
+  async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://callcoach-ai-whhipscribe.onrender.com";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ];
+  },
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
