@@ -1,8 +1,6 @@
 # CallCoach-AI × WhipScribe
 
-<video src="videos/demo/callcoach-demo-2026-09-28T15-11-37.webm" controls width="100%">
-    Your browser does not support embedded video. <a href="videos/demo/callcoach-demo-2026-09-28T15-11-37.webm">Watch the 90-second demo</a>.
-</video>
+[▶ Watch the 90-second demo](videos/demo/callcoach-demo-2026-09-28T15-11-37.webm)
 
 Upload a recording, get a scorecard with evidence at the exact second.
 
