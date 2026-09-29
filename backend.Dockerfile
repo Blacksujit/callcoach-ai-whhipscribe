@@ -25,4 +25,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/api/health || exit 1
 
 # Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "-w", "1", "--threads", "4", "--timeout", "300", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "-w", "1", "--threads", "4", "--timeout", "300", "app:app"]# Force redeploy - Tue Sep 29 21:01:56 IST 2026
