@@ -1,6 +1,11 @@
 # CallCoach-AI × WhipScribe
 
-**[▶️ Watch the 90-second demo](videos/demo/callcoach-demo-2026-09-28T15-11-37.webm)** — upload a recording, get a scorecard with evidence at the exact second.
+<video controls width="720">
+    <source src="videos/demo/callcoach-demo-2026-09-28T15-11-37.webm" type="video/webm">
+    Your browser does not support embedded video. <a href="videos/demo/callcoach-demo-2026-09-28T15-11-37.webm">Watch the 90-second demo</a>.
+</video>
+
+Upload a recording, get a scorecard with evidence at the exact second.
 
 ## What it does
 
@@ -13,59 +18,37 @@ Across multiple calls, the same pipeline shows whether quality is improving, sta
 
 
 ```mermaid
-graph TB
-    subgraph USER
-        U["Sales Manager / Team Lead\nSarah @ 10M ARR SaaS"]
+flowchart LR
+    Person["Manager or team lead"] --> Sources
+
+    subgraph Sources["Call sources"]
+        Recording["Audio recording"]
+        Link["Video or shared link"]
+        Library["WhipScribe library"]
     end
 
-    subgraph "Input Layer"
-        AUDIO["🎙️ Audio Recording\n(mic, file)"]
-        URL["🔗 YouTube / Podcast / Drive Link"]
-        MCP["📚 WhipScribe MCP Server\n(Library scan / search)"]
+    Sources --> Transcription["WhipScribe transcribes the call"]
+    Transcription --> Review["CallCoach reviews the transcript"]
+
+    subgraph Review["Call review"]
+        Scores["Score clarity, tension, action items and compliance"]
+        Evidence["Link findings to timestamps"]
     end
 
-    subgraph "WhipScribe API"
-        WFApi["POST /transcribe\nGET /jobs/{id} (poll)\nGET /jobs/{id}/result\nGET /jobs/{id}/clips/candidates\nGET /jobs/{id}/audio/url"]
+    Review --> Save[("Save call results")]
+    Save --> Trends["Compare calls and find recurring patterns"]
+    Review --> Report["Create a scorecard with evidence"]
+    Trends --> Report
+
+    subgraph Results["What the team sees"]
+        Dashboard["Dashboard"]
+        Summary["Reports and summaries"]
+        Tasks["Follow-up tasks"]
     end
 
-    subgraph "Processing Core"
-        EVAL["📊 Evaluation Engine\nLLM-as-Judge + Rule-Based Fallback\n\nAction Items | Clarity\nTension | Compliance\n+ Timestamped Evidence"]
-        STORE[(SQLite\nEvaluation Store\nper-meeting results)]
-    end
-
-    subgraph "THE DIFFERENTIATOR"
-        TREN["📈 Trend Analysis Engine\n\nCross-meeting quality trends\nAction item lifecycle tracking\nRecurring issue detection\nCoaching insights engine\nTeam vs individual patterns\nWeak-spot weighting"]
-    end
-
-    subgraph "Delivery Layer"
-        REPORT["📝 Markdown QA Report"]
-        WEB["🖥️ Web Dashboard\n/trends · /coach · /report/:id"]
-        NOTION["📋 Notion Page"]
-        SLACK["💬 Slack Digest"]
-        EMAIL["📧 Email Summary"]
-        TASKS["✅ Todoist/Trello\nAuto-task from action items"]
-    end
-
-    U --> AUDIO
-    U --> URL
-    U --> MCP
-
-    AUDIO --> WFApi
-    URL --> WFApi
-    MCP --> WFApi
-
-    WFApi -->|transcript JSON| EVAL
-    EVAL --> STORE
-    STORE --> TREN
-    TREN -->|insights + trends| STORE
-
-    EVAL --> REPORT
-    TREN --> REPORT
-    REPORT --> WEB
-    REPORT --> NOTION
-    REPORT --> SLACK
-    REPORT --> EMAIL
-    TREN --> TASKS
+    Report --> Dashboard
+    Report --> Summary
+    Trends --> Tasks
 ```
 
 ### Layer-wise Arcitecture:
