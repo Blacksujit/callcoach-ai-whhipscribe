@@ -13,50 +13,72 @@ Across multiple calls, the same pipeline shows whether quality is improving, sta
 
 ## Architecture
 
-Two pieces. The dashboard is a static Next.js site on Vercel. The backend is a Flask API on Render (or Supabase) that does the heavy work.
 
 ```mermaid
-flowchart TB
-  U["User"]
-  subgraph V["Frontend (Vercel)"]
-    DASH["Dashboard\n(upload, library, reports)"]
-  end
-  subgraph B["Backend (Render/Supabase)"]
-    API["Flask API"]
-    BG["Background worker"]
-    DB[("SQLite")]
-    AG["4 agents: Compliance,\nTension, Clarity,\nAction Items"]
-  end
-  subgraph W["WhipScribe API"]
-    W1["Submit recording"]
-    W2["Transcribe (speakers + timestamps)"]
-  end
+graph TB
+    subgraph USER
+        U["Sales Manager / Team Lead"]
+    end
 
-  U --> DASH
-  DASH --> API
-  API --> BG
-  BG --> W1
-  BG --> W2
-  W1 -->|"job_id"| W2
-  W2 -->|"transcript"| AG
-  AG --> DB
-  API <--> DB
-  DASH <-->|"polls status"| API
+    subgraph "Input Layer"
+        AUDIO["Audio Recording\n(mic or file)"]
+        URL["Recording Link"]
+        MCP["WhipScribe Library"]
+    end
+
+    subgraph "WhipScribe API"
+        WFApi["Transcribe recording\nTrack progress\nReturn transcript"]
+    end
+
+    subgraph "Processing Core"
+        EVAL["Review and score call\nAction items | Clarity\nTension | Compliance\nTimestamped evidence"]
+        STORE[(Call results\nfor each meeting)]
+    end
+
+    subgraph "Call Insights"
+        TREN["Compare calls\nTrack trends\nFind recurring issues\nSuggest coaching actions"]
+    end
+
+    subgraph "Delivery Layer"
+        REPORT["Call report"]
+        WEB["Web dashboard\nReports · Trends · Coaching"]
+        NOTION["Notion page"]
+        SLACK["Slack update"]
+        EMAIL["Email summary"]
+        TASKS["Tasks from action items"]
+    end
+
+    U --> AUDIO
+    U --> URL
+    U --> MCP
+
+    AUDIO --> WFApi
+    URL --> WFApi
+    MCP --> WFApi
+
+    WFApi -->|transcript JSON| EVAL
+    EVAL --> STORE
+    STORE --> TREN
+    TREN -->|insights + trends| STORE
+
+    EVAL --> REPORT
+    TREN --> REPORT
+    REPORT --> WEB
+    REPORT --> NOTION
+    REPORT --> SLACK
+    REPORT --> EMAIL
+    TREN --> TASKS
 ```
 
-### How a call flows
+ 
 
-1. **Upload** — File, YouTube link, or browser recording
-2. **Submit** — Backend sends to WhipScribe, returns `job_id`
-3. **Transcribe** — Polls until done, fetches transcript with speakers + timestamps
-4. **Score** — 4 AI agents evaluate: Compliance, Tension, Clarity, Action Items
-5. **Report** — Scores + evidence with clickable timestamps
+### The workflow
 
-Every step stores results in SQLite. The dashboard reads from there.
+```
+Recording → WhipScribe API (transcribe w/ speakers + timestamps) → 4-agent AI scoring → Evidence-backed report → Cross-call trends + coaching insights
+```
 
-### Why split frontend and backend?
-
-Vercel Functions time out after 15 minutes. A transcription + scoring job can take up to 30 minutes, so the backend runs on Render (or Supabase Edge Functions) where long-running jobs work.
+One flow, end to end. WhipScribe handles transcription. CallCoach handles judgment.
 
 ## Screenshots
 
@@ -111,9 +133,9 @@ See `.env.template` for all variables.
 
 ## Deploy
 
-Frontend and backend deploy separately. See [DEPLOYMENT.md](DEPLOYMENT.md) for full details.
+### Frontend (Vercel — production build verified)
 
-### Frontend (Vercel — deployed)
+The Next.js build uses `--webpack` (bypasses Turbopack native binary issues on restricted machines) and `@next/swc-wasm-nodejs` for SWC on WASM.
 
 ```bash
 cd frontend
@@ -121,27 +143,11 @@ npm run build    # cross-env NODE_OPTIONS=--max-old-space-size=2048 next build -
 npm start
 ```
 
-| Env var | Value |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Backend API URL (Render or Supabase) |
+Deployed at: ![Live](https://callcoach-ai-dashboard.vercel.app)
 
-Live at: [https://callcoach-ai-dashboard.vercel.app](https://callcoach-ai-dashboard.vercel.app)
+### Backend (Render)
 
-### Backend (Render or Supabase)
-
-**Option A — Render (free tier)**
-
-`render.yaml` and `Procfile` are configured. Set env vars in the Render dashboard:
-- `WHIPSKRIBE_API_KEY`, `GROQ_API_KEY`, `FRONTEND_URL`, `CORS_ORIGINS`
-
-**Option B — Supabase Edge Functions**
-
-Already deployed. Redeploy via:
-```bash
-supabase functions deploy callcoach --project-ref lcendgcvqwgklhkbnxkx
-```
-
-> **Why not Vercel for the backend?** Transcription + scoring runs up to 30 minutes. Vercel Serverless Functions time out at 15. The backend needs a persistent worker (Render) or edge function (Supabase).
+`render.yaml` and `Procfile` are configured. Set `WHIPSKRIBE_API_KEY`, `GROQ_API_KEY`, `FRONTEND_URL`, and `CORS_ORIGINS` in the Render dashboard.
 
 ---
 
@@ -179,10 +185,10 @@ CallCoach keeps the meeting evidence, finds recurring issues across calls, detec
 ## What doesn't work yet
 
 - No real user has tested it — everything is engineer-verified
-- Background jobs don't survive a restart (single daemon thread; needs a real queue)
+- Synchronous upload polling (long recordings hold the request open)
 - No authentication on the API
 - SQLite on free tiers is ephemeral
-- Cold starts on free Render/Supabase tiers (keep-alive cron recommended)
+- Speaker diarization quality depends on WhipScribe's output
 
 ---
 
@@ -190,11 +196,11 @@ CallCoach keeps the meeting evidence, finds recurring issues across calls, detec
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16, React 19, vanilla CSS |
+| Frontend | Next.js 16, React 19, React Bits (motion), vanilla CSS |
 | Backend | Python Flask, SQLite, gunicorn |
 | Transcription | WhipScribe API |
 | LLM | GROQ (openai/gpt-oss-120b), with OpenAI/Anthropic support |
-| Deployment | Vercel (frontend), Render or Supabase (backend) |
+| Deployment | Vercel (frontend), Render (backend) |
 | MCP | Python MCP server (stdlib) |
 
 ---
