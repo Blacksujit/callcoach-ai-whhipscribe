@@ -11,6 +11,48 @@ CallCoach-AI turns any founder-investor, customer-success, or sales call into a 
 Across multiple calls, the same pipeline shows whether quality is improving, stagnating, or repeating the same mistakes — and produces prescriptive coaching recommendations.
 
 
+## Features
+
+One recording in, one scored report out. Transcription is the on-ramp, not the
+product — the product is the judgment.
+
+### LLM as the judge
+
+The transcript is not summarized. It is graded against a rubric by four
+specialist agents, each a focused judge on one dimension:
+
+- **Compliance** — were commitments, claims, and promises checked and tracked?
+- **Tension** — where did a participant hedge, deflect, or tighten on valuation?
+- **Clarity** — was the ask clear up front, the narrative consistent, the
+  traction concrete?
+- **Action Items** — what was promised, by whom, and will any of it land?
+
+They score, they don't regurgitate the call.
+
+### Four agents, one report
+
+The four scores fold into a single scorecard: an overall number, four
+category bars, the one **primary risk** (the issue that cost the most points),
+and every flagged quote with its speaker and timestamp. Quotes that cannot be
+matched to a real transcript segment are dropped — no fabricated evidence and
+no guess at a timestamp. The report links each issue to the exact second in
+the recording so you can listen to it once instead of reading the whole call.
+
+### Coaching intelligence
+
+A single call gives a diagnosis. Multiple calls give a trend line:
+
+- **Deal velocity** — how fast commitments close across calls.
+- **Momentum** — is the pitch sharpening on feedback, or repeating the same
+  flaw (the founder's blind spot, surfacing every time)?
+- **Recurring issue clusters** — the same problem, called out across calls,
+  with the quotes that prove it.
+- **Speaker-level risk** — coach the founder and their co-founder separately
+  when the diarization is reliable.
+
+The Coach page turns that into prescriptive next actions, each tied to a real
+quote from a specific call.
+
 ## Architecture
 
 
