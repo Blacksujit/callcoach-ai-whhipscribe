@@ -28,3 +28,4 @@ services:
     autoDeploy: true
     regions:
       - oregon
+
