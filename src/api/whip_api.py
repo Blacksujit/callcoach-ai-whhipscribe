@@ -49,6 +49,7 @@ def poll_job(api_key, job_id, timeout=300, interval=5):
 
         try:
             resp = requests.get(f"{BASE_URL}/jobs/{job_id}", headers=_headers(api_key), timeout=30)
+            if resp.status_code in (502, 503, 504):
                 print(f"  [RETRY] Server error {resp.status_code}, retrying...")
                 time.sleep(interval)
                 continue

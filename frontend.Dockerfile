@@ -23,12 +23,13 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/next.config.ts ./
-COPY --from=builder /app/next.config.mjs ./
 COPY --from=builder /app/tsconfig.json ./
 
 # Install only production dependencies
 RUN npm ci --omit=dev
 
+# next start does not need the SWC toolchain or cross-env
+ENV NODE_OPTIONS=--max-old-space-size=2048
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+CMD ["npx", "next", "start"]

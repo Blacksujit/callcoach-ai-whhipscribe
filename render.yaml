@@ -4,6 +4,8 @@ services:
     name: callcoach-backend
     region: oregon
     env: docker
+    dockerfilePath: backend.Dockerfile
+    dockerContext: .
     plan: free
     autoDeploy: true
     healthCheck:
