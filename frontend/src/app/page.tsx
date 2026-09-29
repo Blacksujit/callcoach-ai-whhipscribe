@@ -173,9 +173,16 @@ export default function Home() {
   return (
     <PageTransition>
     <main className="site-shell">
-      <Navbar />
+     <Navbar />
 
-      <section className="d-hero-v2">
+     {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+       <div className="demo-banner">
+         <span className="demo-banner__icon">📊</span>
+         <span className="demo-banner__text">Demo Mode: Showing sample call data. Connect your backend for real analysis.</span>
+       </div>
+     )}
+
+     <section className="d-hero-v2">
         <div className="d-hero-v2-inner">
           <div className="d-hero-v2-copy">
             <h1 className="d-hero-v2-h1 d-hero-v2-h1-sm" style={{ display: "block" }}>
