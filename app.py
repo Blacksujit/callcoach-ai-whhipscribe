@@ -78,11 +78,11 @@ _cors_origins = [
     origin.strip()
     for origin in os.environ.get(
         "CORS_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000,https://callcoach-ai-dashboard.vercel.app,https://frontend.vercel.app,https://callcoach-ai-whhipscribe.vercel.app",
+        "http://localhost:3000,http://127.0.0.1:3000,https://callcoach-ai-dashboard.vercel.app,https://callcoach-ai-whhipscribe.vercel.app",
     ).split(",")
     if origin.strip()
 ]
-CORS(app, origins=_cors_origins, supports_credentials=True)
+CORS(app, origins=_cors_origins if _cors_origins else "*", supports_credentials=True)
 
 
 def get_api_key():
