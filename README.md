@@ -31,7 +31,7 @@ graph TB
     end
 
     subgraph "Processing Core"
-       CORE[ "LLM as a Judge (4 agents analyzes the report)"]
+       CORE["LLM as a Judge\n(4 agents analyze the report)"]
     end
 
     subgraph "Call Insights"

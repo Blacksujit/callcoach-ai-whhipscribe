@@ -1,7 +1,6 @@
 // Supabase Edge Function - Deno entry point
 // Minimal TypeScript handler that proxies to Python Flask logic
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Health check endpoint
 export default async function handler(req: Request, env: Record<string, string>) {
