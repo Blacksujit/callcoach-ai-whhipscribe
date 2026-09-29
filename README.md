@@ -1,6 +1,10 @@
 # CallCoach-AI × WhipScribe
 
-**[▶️ Watch the 90-second demo](videos/demo/callcoach-demo-2026-09-28T15-11-37.webm)** — upload a recording, get a scorecard with evidence at the exact second.
+<video src="videos/demo/callcoach-demo-2026-09-28T15-11-37.webm" controls width="100%">
+    Your browser does not support embedded video. <a href="videos/demo/callcoach-demo-2026-09-28T15-11-37.webm">Watch the 90-second demo</a>.
+</video>
+
+Upload a recording, get a scorecard with evidence at the exact second.
 
 ## What it does
 
@@ -141,7 +145,7 @@ npm run build    # cross-env NODE_OPTIONS=--max-old-space-size=2048 next build -
 npm start
 ```
 
-Deployed at: https://callcoach-ai-dashboard.vercel.app
+Deployed at: ![Live](https://callcoach-ai-dashboard.vercel.app)
 
 ### Backend (Render)
 
