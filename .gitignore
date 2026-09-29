@@ -35,3 +35,6 @@ backend.log
 
 # Frontend working files
 frontend/test-results/
+.vercel
+
+node_modules

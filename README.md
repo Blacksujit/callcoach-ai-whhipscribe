@@ -1,6 +1,6 @@
 # CallCoach-AI × WhipScribe
 
-[▶ Watch the 90-second demo](videos/demo/callcoach-demo-2026-09-28T15-11-37.webm)
+[Live APP](https://callcoachai.sujit.top/) ,   [▶ Watch the 90-second demo](videos/demo/callcoach-demo-2026-09-28T15-11-37.webm)
 
 Upload a recording, get a scorecard with evidence at the exact second.
 
@@ -203,7 +203,7 @@ npm run build    # cross-env NODE_OPTIONS=--max-old-space-size=2048 next build -
 npm start
 ```
 
-Deployed at: ![Live](https://callcoach-ai-dashboard.vercel.app)
+Deployed at: ![Live](https://callcoachai.sujit.top/)
 
 ### Backend (Render)
 
