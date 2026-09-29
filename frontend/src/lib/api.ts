@@ -1,6 +1,6 @@
 // API client for the CallCoach-AI Flask backend
-// Uses relative URLs (/api/*) which Vercel proxies to the Render backend
-const API_BASE = "/api";
+// Uses relative paths (/api/*) which Vercel proxies to the Render backend
+const API_BASE = "";
 export interface Job {
   job_id: string;
   filename: string;
