@@ -15,35 +15,35 @@ Across multiple calls, the same pipeline shows whether quality is improving, sta
 ```mermaid
 graph TB
     subgraph USER
-        U["Sales Manager / Team Lead\nSarah @ 10M ARR SaaS"]
+        U["Sales Manager / Team Lead"]
     end
 
     subgraph "Input Layer"
-        AUDIO["🎙️ Audio Recording\n(mic, file)"]
-        URL["🔗 YouTube / Podcast / Drive Link"]
-        MCP["📚 WhipScribe MCP Server\n(Library scan / search)"]
+        AUDIO["Audio Recording\n(mic or file)"]
+        URL["Recording Link"]
+        MCP["WhipScribe Library"]
     end
 
     subgraph "WhipScribe API"
-        WFApi["POST /transcribe\nGET /jobs/{id} (poll)\nGET /jobs/{id}/result\nGET /jobs/{id}/clips/candidates\nGET /jobs/{id}/audio/url"]
+        WFApi["Transcribe recording\nTrack progress\nReturn transcript"]
     end
 
     subgraph "Processing Core"
-        EVAL["📊 Evaluation Engine\nLLM-as-Judge + Rule-Based Fallback\n\nAction Items | Clarity\nTension | Compliance\n+ Timestamped Evidence"]
-        STORE[(SQLite\nEvaluation Store\nper-meeting results)]
+        EVAL["Review and score call\nAction items | Clarity\nTension | Compliance\nTimestamped evidence"]
+        STORE[(Call results\nfor each meeting)]
     end
 
-    subgraph "THE DIFFERENTIATOR"
-        TREN["📈 Trend Analysis Engine\n\nCross-meeting quality trends\nAction item lifecycle tracking\nRecurring issue detection\nCoaching insights engine\nTeam vs individual patterns\nWeak-spot weighting"]
+    subgraph "Call Insights"
+        TREN["Compare calls\nTrack trends\nFind recurring issues\nSuggest coaching actions"]
     end
 
     subgraph "Delivery Layer"
-        REPORT["📝 Markdown QA Report"]
-        WEB["🖥️ Web Dashboard\n/trends · /coach · /report/:id"]
-        NOTION["📋 Notion Page"]
-        SLACK["💬 Slack Digest"]
-        EMAIL["📧 Email Summary"]
-        TASKS["✅ Todoist/Trello\nAuto-task from action items"]
+        REPORT["Call report"]
+        WEB["Web dashboard\nReports · Trends · Coaching"]
+        NOTION["Notion page"]
+        SLACK["Slack update"]
+        EMAIL["Email summary"]
+        TASKS["Tasks from action items"]
     end
 
     U --> AUDIO
