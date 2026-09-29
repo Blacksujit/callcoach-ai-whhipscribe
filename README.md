@@ -13,106 +13,50 @@ Across multiple calls, the same pipeline shows whether quality is improving, sta
 
 ## Architecture
 
-Two deployable units, split by what each one can tolerate. The Next.js
-dashboard is a static-first frontend on Vercel. The Flask API is a stateful
-worker on Render behind gunicorn. The split is not accidental.
-
-Scoring a call is a job that polls the WhipScribe API for up to thirty minutes
-while four GROQ agents grade the transcript. That cannot live inside a Vercel
-Serverless Function (15-minute hard cap, no long-running threads) or an Edge
-Function, so the API stays on Render where a daemon thread can run as long as
-the source media needs. The dashboard, by contrast, is just views over JSON —
-that one belongs on Vercel.
+Two pieces. The dashboard is a static Next.js site on Vercel. The backend is a Flask API on Render (or Supabase) that does the heavy work.
 
 ```mermaid
 flowchart TB
-  U["User — founder / sales manager / CSM"]
-
-  subgraph VERCEL["Frontend — Next.js 16 · Vercel"]
-    DASH["Dashboard\n(upload, library, report,\ntrends, coach, speakers)"]
+  U["User"]
+  subgraph V["Frontend (Vercel)"]
+    DASH["Dashboard\n(upload, library, reports)"]
   end
-
-  subgraph RENDER["Backend — Flask + gunicorn · Render\n(persistent worker, daemon threads)"]
-    UP["POST /api/upload\nmultipart: file / recording"]
-    UL["POST /api/upload/url\npaste link"]
-    ST["GET /api/upload/status/<id>\nfront-end stage polling"]
-    BG["Background thread\n(poll -> score -> persist)"]
-    DB[(SQLite\ntranscripts + scores)]
-    OUT["Report · Trends · Coach · Speakers\nMCP server (4 tools) · CLI\nNotion / Slack export"]
+  subgraph B["Backend (Render/Supabase)"]
+    API["Flask API"]
+    BG["Background worker"]
+    DB[("SQLite")]
+    AG["4 agents: Compliance,\nTension, Clarity,\nAction Items"]
   end
-
-  subgraph WH["WhipScribe API — async transcription"]
-    W1["POST /transcribe or /transcribe/url\nreturns job_id"]
-    W2["GET /jobs /jobs/{id}\npoll up to 900s (upload)\n1800s (link)"]
-    W3["GET /jobs/{id}/result\nspeakers + timestamps"]
+  subgraph W["WhipScribe API"]
+    W1["Submit recording"]
+    W2["Transcribe (speakers + timestamps)"]
   end
-
-  AG["4 agents — Compliance, Tension,\nClarity, Action Items\n(GROQ, rule-based fallback)"]
 
   U --> DASH
-  DASH --> UP & UL
-  DASH <--> ST
-  UP & UL -->|"202 + job_id"| BG
+  DASH --> API
+  API --> BG
   BG --> W1
   BG --> W2
   W1 -->|"job_id"| W2
-  W2 -->|"done"| W3
-  W3 -->|"transcript"| BG
-  BG -->|"score + evidence"| AG
-  BG --> DB
+  W2 -->|"transcript"| AG
   AG --> DB
-  ST <-->|"stages"| DB
-  DB --> OUT
+  API <--> DB
+  DASH <-->|"polls status"| API
 ```
 
 ### How a call flows
 
-1. **Capture.** One of three ways: drop a file, paste a YouTube / Drive /
-   Dropbox / podcast link, or record in the browser (webm blob). All three go
-   to the same endpoint family.
-2. **Accept and detach.** `POST /api/upload` (multipart) or
-   `POST /api/upload/url` (JSON) validates the input, submits it to WhipScribe,
-   and returns `202` with a `job_id`. The HTTP request ends there; a daemon
-   thread owns everything that follows.
-3. **Transcribe.** The thread polls `GET /jobs/{id}` until the job is terminal —
-   900s for a file or recording (WhipScribe already has the bytes), 1800s for a
-   link (`whipscribe.com/docs` accepts `POST /transcribe/url`, and remote media
-   must be fetched first, so it gets more headroom). Then it fetches
-   `GET /jobs/{id}/result` with speakers, segment timestamps, and the `words`
-   list.
-4. **Score.** Four agents grade the transcript: Compliance, Tension, Clarity,
-   and Action Items. Every quoted piece of evidence is cross-checked against the
-   returned segments; unverified claims are dropped rather than given a
-   timestamp they cannot back. Scores and the transcript persist to SQLite.
-5. **Surface.** The dashboard polls `GET /api/upload/status/<id>` and walks the
-   stage ribbon (`uploading -> transcribing -> scoring -> report`) before
-   opening the call report. Trends, Coach, Speakers, the MCP server, the CLI,
-   and the Notion / Slack export all read from that one stored evaluation.
+1. **Upload** — File, YouTube link, or browser recording
+2. **Submit** — Backend sends to WhipScribe, returns `job_id`
+3. **Transcribe** — Polls until done, fetches transcript with speakers + timestamps
+4. **Score** — 4 AI agents evaluate: Compliance, Tension, Clarity, Action Items
+5. **Report** — Scores + evidence with clickable timestamps
 
-The workflow, in one line:
+Every step stores results in SQLite. The dashboard reads from there.
 
-```
-File / link / recording -> 202 job -> WhipScribe transcribe (speakers + timestamps) -> 4-agent GROQ scoring -> evidence-backed report -> cross-call trends + coaching (SQLite is the single source of truth)
-```
+### Why split frontend and backend?
 
-### What this buys
-
-One pipeline, three input sources — a file, a link, and a recording converge at
-step 2 and are indistinguishable thereafter. No separate code path per source.
-
-### Where the design leaks (honestly)
-
-- In-flight jobs do not survive a worker restart. The background thread lives
-  in a single gunicorn worker; a deploy or crash mid-transcription drops the
-  job. The fix is a real queue (RQ/Celery) with job persistence — in the
-  vision, not built yet.
-- No auth on the API. It trusts one shared WhipScribe key. Do not expose it on
-  a public URL without an auth layer.
-- SQLite on free tiers is ephemeral. A Render redeploy wipes results, and the
-  trends/coach views go empty until calls are reprocessed.
-- Transcription cost is real. Each call hits the WhipScribe API and GROQ; only
-  the bundled sample transcript works offline (`e2e_test.py --offline`).
-
+Vercel Functions time out after 15 minutes. A transcription + scoring job can take up to 30 minutes, so the backend runs on Render (or Supabase Edge Functions) where long-running jobs work.
 
 ## Screenshots
 
@@ -167,18 +111,9 @@ See `.env.template` for all variables.
 
 ## Deploy
 
-Two services, two platforms. The frontend is a static Next.js build on Vercel;
-the backend is the Flask worker on Render. They talk over HTTPS, so the
-frontend is pointed at the backend through one environment variable.
+Frontend and backend deploy separately. See [DEPLOYMENT.md](DEPLOYMENT.md) for full details.
 
-### Frontend (Vercel)
-
-The Next.js build uses `--webpack` (bypasses Turbopack native binary issues on
-restricted machines) and `@next/swc-wasm-nodejs` for SWC on WASM.
-
-| Vercel env var | Value |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | `https://<backend>.onrender.com` (the Render URL below) |
+### Frontend (Vercel — deployed)
 
 ```bash
 cd frontend
@@ -186,21 +121,27 @@ npm run build    # cross-env NODE_OPTIONS=--max-old-space-size=2048 next build -
 npm start
 ```
 
-Deployed at: [Live](https://callcoach-ai-dashboard.vercel.app)
+| Env var | Value |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Backend API URL (Render or Supabase) |
 
-### Backend (Render)
+Live at: [https://callcoach-ai-dashboard.vercel.app](https://callcoach-ai-dashboard.vercel.app)
 
-`render.yaml` and `Procfile` are configured. In the Render dashboard set:
+### Backend (Render or Supabase)
 
-- `WHIPSKRIBE_API_KEY` — your key from WhipScribe (Account -> API key)
-- `GROQ_API_KEY` — for the 4-agent scoring
-- `FRONTEND_URL` — the Vercel URL above
-- `CORS_ORIGINS` — the Vercel URL above (so cross-origin uploads work)
+**Option A — Render (free tier)**
 
-> Why not Vercel for the backend? Transcription + scoring runs in a background
-> thread for up to 30 minutes (900s for uploads/recordings, 1800s for links).
-> Serverless functions cap out at 15 minutes and can't host that thread, so the
-> API stays on a persistent Render worker. See [Architecture](#architecture).
+`render.yaml` and `Procfile` are configured. Set env vars in the Render dashboard:
+- `WHIPSKRIBE_API_KEY`, `GROQ_API_KEY`, `FRONTEND_URL`, `CORS_ORIGINS`
+
+**Option B — Supabase Edge Functions**
+
+Already deployed. Redeploy via:
+```bash
+supabase functions deploy callcoach --project-ref lcendgcvqwgklhkbnxkx
+```
+
+> **Why not Vercel for the backend?** Transcription + scoring runs up to 30 minutes. Vercel Serverless Functions time out at 15. The backend needs a persistent worker (Render) or edge function (Supabase).
 
 ---
 
@@ -238,10 +179,10 @@ CallCoach keeps the meeting evidence, finds recurring issues across calls, detec
 ## What doesn't work yet
 
 - No real user has tested it — everything is engineer-verified
-- In-flight transcription jobs do not survive a worker restart (runs in a single gunicorn daemon thread; no queue yet). A 30-minute call is processed in the background and returns 202 immediately, but a restart mid-job drops it.
+- Background jobs don't survive a restart (single daemon thread; needs a real queue)
 - No authentication on the API
 - SQLite on free tiers is ephemeral
-- Speaker diarization quality depends on WhipScribe's output
+- Cold starts on free Render/Supabase tiers (keep-alive cron recommended)
 
 ---
 
@@ -249,11 +190,11 @@ CallCoach keeps the meeting evidence, finds recurring issues across calls, detec
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16, React 19, React Bits (motion), vanilla CSS |
+| Frontend | Next.js 16, React 19, vanilla CSS |
 | Backend | Python Flask, SQLite, gunicorn |
 | Transcription | WhipScribe API |
 | LLM | GROQ (openai/gpt-oss-120b), with OpenAI/Anthropic support |
-| Deployment | Vercel (frontend), Render (backend) |
+| Deployment | Vercel (frontend), Render or Supabase (backend) |
 | MCP | Python MCP server (stdlib) |
 
 ---
