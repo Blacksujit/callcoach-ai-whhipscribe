@@ -1,85 +1,55 @@
-// Supabase Edge Function - Deno entry point
-// Minimal TypeScript handler that proxies to Python Flask logic
-
-
-// Health check endpoint
-export default async function handler(req: Request, env: Record<string, string>) {
+// Minimal Supabase Edge Function
+export default async function handler(req: Request) {
   const url = new URL(req.url);
-  const path = url.pathname;
-  const method = req.method;
-
-  // Set CORS headers
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": env.CORS_ORIGINS || "*",
+  
+  // CORS headers
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   };
 
-  // Handle preflight
-  if (method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers });
   }
 
-  // Health check
-  if (path === "/api/health" || path === "/health") {
-    return jsonResponse({ 
-      status: "ok", 
-      service: "callcoach-backend",
+  if (url.pathname === "/api/health") {
+    return new Response(JSON.stringify({
+      status: "ok",
       platform: "supabase-edge-function",
       timestamp: new Date().toISOString()
-    }, corsHeaders);
+    }), { 
+      status: 200, 
+      headers: { ...headers, "Content-Type": "application/json" } 
+    });
   }
 
-  // List jobs endpoint
-  if (path === "/api/jobs" && method === "GET") {
-    // For now, return empty list - real data from Supabase DB later
-    return jsonResponse({ jobs: [] }, corsHeaders);
+  // List jobs
+  if (url.pathname === "/api/jobs" && req.method === "GET") {
+    return new Response(JSON.stringify({ jobs: [] }), {
+      status: 200,
+      headers: { ...headers, "Content-Type": "application/json" }
+    });
   }
 
-  // Upload endpoint - returns presigned URL for WhipScribe upload
-  if (path === "/api/upload" && method === "POST") {
-    return jsonResponse({
-      error: "Upload requires Python backend with WhipScribe API key"
-    }, corsHeaders, 400);
-  }
-
-  // Analyze endpoint
-  if (path.startsWith("/api/analyze/") && method === "POST") {
-    return jsonResponse({
-      error: "Analyze requires Python backend with LLM evaluation"
-    }, corsHeaders, 400);
-  }
-
-  // Trends data endpoint
-  if (path === "/api/trends-data" && method === "GET") {
-    return jsonResponse({
-      error: "Trends requires Python backend with stored evaluations"
-    }, corsHeaders, 400);
-  }
-
-  // Settings endpoint
-  if (path === "/api/settings" && method === "POST") {
-    return jsonResponse({
+  // Settings
+  if (url.pathname === "/api/settings" && req.method === "POST") {
+    return new Response(JSON.stringify({ 
       message: "Settings saved",
-      whipscribe_key_set: !!env.WHIPSKRIBE_API_KEY
-    }, corsHeaders);
+      whipscribe_key_set: true
+    }), {
+      status: 200,
+      headers: { ...headers, "Content-Type": "application/json" }
+    });
   }
 
-  // Fallback - proxy info message
-  return jsonResponse({
-    error: "Endpoint not configured",
-    path,
-    method,
-    message: "Full backend available via Python/Flask deployment. See callcoach-ai-whhipscribe repo for details."
-  }, corsHeaders, 404);
-}
-
-function jsonResponse(data: any, headers: Record<string, string>, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers
-    }
+  // List recordings endpoint (stub)
+  return new Response(JSON.stringify({
+    error: "Not found",
+    path: url.pathname,
+    method: req.method
+  }), {
+    status: 404,
+    headers: { ...headers, "Content-Type": "application/json" }
   });
 }
