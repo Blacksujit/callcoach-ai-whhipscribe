@@ -21,10 +21,34 @@ services:
       - key: LLM_MODEL
         value: openai/gpt-oss-120b
       - key: CORS_ORIGINS
-        value: "https://callcoach-ai-dashboard.vercel.app,https://callcoach-ai-whhipscribe.vercel.app"
+        value: "https://callcoachai.sujit.top,https://callcoach-ai-dashboard.vercel.app,https://callcoach-ai-whhipscribe.vercel.app"
       - key: FRONTEND_URL
-        value: "https://callcoach-ai-dashboard.vercel.app"
+        value: "https://callcoachai.sujit.top"
       - key: FLASK_SECRET_KEY
         value: "prod-secret-key-2026"
       - key: DB_PATH
         value: /data/callcoach.db
+      - key: PUBLIC_APP_URL
+        value: "https://callcoachai.sujit.top"
+      # Connector credentials - set the values in the Render dashboard (sync: false keeps them out of git)
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+      - key: NOTION_TOKEN
+        sync: false
+      - key: NOTION_DATABASE_ID
+        sync: false
+      - key: HUBSPOT_TOKEN
+        sync: false
+      # Optional one-click OAuth apps (register once, then Connect is one click for everyone)
+      - key: SLACK_CLIENT_ID
+        sync: false
+      - key: SLACK_CLIENT_SECRET
+        sync: false
+      - key: NOTION_CLIENT_ID
+        sync: false
+      - key: NOTION_CLIENT_SECRET
+        sync: false
+      - key: HUBSPOT_CLIENT_ID
+        sync: false
+      - key: HUBSPOT_CLIENT_SECRET
+        sync: false
