@@ -275,3 +275,66 @@ export const SAMPLE_CONNECTIONS = {
   notion: { connected: false, source: null, database_id: null, token_set: false },
   llm: { provider: null, model: "openai/gpt-oss-120b", key_set: false },
 };
+
+export type AssistantQA = {
+  q: string;
+  keywords: string[];
+  answer: string;
+  category: string;
+  evidence: Array<{ text: string; speaker: string; start: number }>;
+};
+
+export const SAMPLE_ASSISTANT_QA: AssistantQA[] = [
+  {
+    q: "How did I do on my last call?",
+    keywords: ["how did", "last call", "score", "did i do"],
+    category: "clarity",
+    answer:
+      "40/100. The seed call opened strong but lost points at 0:09 - the revenue miss came back as 'that's... I mean' - and at 0:27 with a burn-rate projection ('450K a month') stated without backing. The hiring plan at 0:18 was the best moment: concrete and dated.",
+    evidence: [
+      { text: "Three out of twelve? That's... I mean, it's below our forecast.", speaker: "Alex (Founder)", start: 9 },
+      { text: "Look, we've hired a new head of enterprise sales. She starts Monday.", speaker: "Alex (Founder)", start: 18 },
+    ],
+  },
+  {
+    q: "What should I improve?",
+    keywords: ["improve", "fix", "better", "next time"],
+    category: "compliance",
+    answer:
+      "Own the number when it is bad, and never state financials without a source. 'That's... I mean, it's below our forecast' sounds like a concession; 'We closed 3 of 12 - here is the pipeline' sounds like a plan. The 450K burn figure needs a slide behind it.",
+    evidence: [
+      { text: "Three out of twelve? That's... I mean, it's below our forecast.", speaker: "Alex (Founder)", start: 9 },
+      { text: "We're burning about 450K a month. I think we have 11 months.", speaker: "Alex (Founder)", start: 27 },
+    ],
+  },
+  {
+    q: "What are my weaknesses?",
+    keywords: ["weakness", "pattern", "recurring", "again", "weak"],
+    category: "clarity",
+    answer:
+      "Two patterns across the portfolio: numbers without backing (financial claims stated with no source - appears in 3 of 5 calls) and ducking the hard question ('That math doesn't add up' went unanswered in-call).",
+    evidence: [
+      { text: "We're burning about 450K a month. I think we have 11 months.", speaker: "Alex (Founder)", start: 27 },
+      { text: "That math doesn't add up with the revenue drop you mentioned.", speaker: "Sarah (Investor)", start: 31 },
+    ],
+  },
+  {
+    q: "What did we commit to?",
+    keywords: ["commit", "promise", "action item", "follow", "agreed"],
+    category: "action_items",
+    answer:
+      "Two commitments from the seed call: hire the head of enterprise sales (starts Monday) and produce an updated revenue forecast reconciled with the burn rate. The forecast is the open one - the investor asked for it at 0:31.",
+    evidence: [
+      { text: "Look, we've hired a new head of enterprise sales. She starts Monday.", speaker: "Alex (Founder)", start: 18 },
+      { text: "That math doesn't add up with the revenue drop you mentioned.", speaker: "Sarah (Investor)", start: 31 },
+    ],
+  },
+  {
+    q: "What can you answer?",
+    keywords: ["what can", "help", "question", "ask"],
+    category: "clarity",
+    answer:
+      "Ask about your calls: 'How did I do on my last call?', 'What should I improve?', 'What are my weaknesses?', 'What did we commit to?'. Every answer cites the transcript - quote, speaker, and the second.",
+    evidence: [],
+  },
+];
