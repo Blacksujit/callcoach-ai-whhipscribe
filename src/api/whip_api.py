@@ -11,13 +11,12 @@ def _headers(api_key):
 
 
 def submit_file(api_key, filepath, language=None):
-    """Upload an audio file and return the job_id."""
+    """Upload an audio file with diarization + word timestamps; return the job_id."""
     with open(filepath, "rb") as f:
         files = {"file": f}
-        fields = {}
+        fields = {"diarize": "true", "word_timestamps": "true", "source": "api"}
         if language:
             fields["language"] = language
-        fields["source"] = "api"
         for k, v in fields.items():
             files[k] = (None, v)
         resp = requests.post(f"{BASE_URL}/transcribe", headers=_headers(api_key), files=files, timeout=30)
@@ -26,15 +25,14 @@ def submit_file(api_key, filepath, language=None):
 
 
 def submit_url(api_key, url, language=None):
-    """Submit a URL for transcription and return the job_id.
+    """Submit a URL for diarized transcription and return the job_id.
 
     WhipScribe accepts URL submits on POST /api/v1/transcribe/url (per docs).
     Only Creative Commons-licensed YouTube URLs are currently accepted.
     """
-    payload = {"url": url}
+    payload = {"url": url, "diarize": True, "word_timestamps": True, "source": "url"}
     if language:
         payload["language"] = language
-    payload["source"] = "url"
     resp = requests.post(f"{BASE_URL}/transcribe/url", headers=_headers(api_key), json=payload, timeout=30)
     resp.raise_for_status()
     return resp.json()["job_id"]
@@ -130,3 +128,16 @@ def get_high_signal_moments(api_key, job_id):
         return None
     resp.raise_for_status()
     return resp.json()
+
+
+def get_insights(api_key, job_id):
+    """WhipScribe's own read of a job: summary, named quotes, topics, speakers.
+
+    Returns None when the job has no insights (404/402) instead of raising.
+    """
+    resp = requests.get(f"{BASE_URL}/jobs/{job_id}/insights", headers=_headers(api_key), timeout=60)
+    if resp.status_code in (402, 404):
+        return None
+    resp.raise_for_status()
+    payload = resp.json()
+    return payload.get("insights") or payload
