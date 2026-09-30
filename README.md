@@ -1,6 +1,6 @@
 # CallCoach-AI × WhipScribe
 
-[Live APP](https://callcoachai.sujit.top/) ,   [▶ Watch the 90-second demo](videos/demo/callcoach-demo-2026-09-28T15-11-37.webm)
+[Live APP](https://callcoachai.sujit.top/) ,   [▶ Video demo](https://github.com/Blacksujit/whipscribe-buildathon/blob/track-4-coach-pipeline/apps/blacksujit/track-4/videos/demo/callcoach-demo-2026-09-28T15-11-37.webm) (330MB, right-click "Save As")
 
 Upload a recording, get a scorecard with evidence at the exact second.
 
