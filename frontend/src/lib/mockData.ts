@@ -1,4 +1,4 @@
-// Sample data for demo mode — lets the dashboard run without a Flask backend.
+// Sample data for demo mode â€” lets the dashboard run without a Flask backend.
 // Used when NEXT_PUBLIC_DEMO_MODE=true and the API is unreachable.
 
 export function isDemo(): boolean {
@@ -85,10 +85,10 @@ export const SAMPLE_REPORT = {
       clarity: 54,
       action_items: 67,
     },
-    summary: "The founder showed strong defensiveness around revenue miss but recovered with concrete hiring plan. Investor pressed on burn math — needs better alignment on forecast assumptions.",
+    summary: "The founder showed strong defensiveness around revenue miss but recovered with concrete hiring plan. Investor pressed on burn math â€” needs better alignment on forecast assumptions.",
     action_items: [
       {
-        text: "Hire head of enterprise sales — starts Monday",
+        text: "Hire head of enterprise sales â€” starts Monday",
         speaker: "Alex (Founder)",
         start: 18,
         end: 22,
@@ -111,7 +111,7 @@ export const SAMPLE_REPORT = {
         text: "That math doesn't add up with the revenue drop you mentioned.",
         speaker: "Sarah (Investor)",
         start: 31,
-        issue: "Assumes founder knows exact numbers — creates tension without context",
+        issue: "Assumes founder knows exact numbers â€” creates tension without context",
       },
     ],
     tension_signals: [
@@ -129,7 +129,7 @@ export const SAMPLE_REPORT = {
         text: "We're burning about 450K a month. I think we have 11 months.",
         speaker: "Alex (Founder)",
         start: 27,
-        risk: "Financial projection stated without data backing — could trigger investor pushback",
+        risk: "Financial projection stated without data backing â€” could trigger investor pushback",
       },
     ],
     deal_killer: undefined,
@@ -174,7 +174,7 @@ export const SAMPLE_REPORT = {
       score: 67,
       items: [
         {
-          text: "Hire head of enterprise sales — starts Monday",
+          text: "Hire head of enterprise sales â€” starts Monday",
           speaker: "Alex (Founder)",
           start: 18,
           end: 22,
@@ -206,7 +206,7 @@ export const SAMPLE_COACH_DATA = {
       priority: "high" as const,
       issue: "Deflective language around revenue miss",
       action: "Own the number without hedging. Replace 'That's... I mean, it's below our forecast' with 'We closed 3 of 12. Here's the breakdown.'",
-      evidence: "Call @ 1:09 — founder used hedge words after investor flagged the gap",
+      evidence: "Call @ 1:09 â€” founder used hedge words after investor flagged the gap",
       confidence: 0.92,
     },
     {
@@ -214,7 +214,7 @@ export const SAMPLE_COACH_DATA = {
       priority: "medium" as const,
       issue: "Burn rate vs. revenue disconnect",
       action: "Prepare a reconciled runway slide that accounts for the revenue drop. Investor called out the math not adding up.",
-      evidence: "Call @ 3:07 — investor: 'That math doesn\\'t add up' / founder: 'I think we have 11 months' with no data",
+      evidence: "Call @ 3:07 â€” investor: 'That math doesn\\'t add up' / founder: 'I think we have 11 months' with no data",
       confidence: 0.88,
     },
     {
@@ -222,7 +222,7 @@ export const SAMPLE_COACH_DATA = {
       priority: "high" as const,
       issue: "Recurring compliance risk: unbacked financial claims",
       action: "Always cite data points when stating financial metrics. '450K/month' needs supporting context.",
-      evidence: "Appears in 3 of 5 calls — same pattern of stating numbers without backing",
+      evidence: "Appears in 3 of 5 calls â€” same pattern of stating numbers without backing",
       confidence: 0.95,
     },
   ],
@@ -275,66 +275,3 @@ export const SAMPLE_CONNECTIONS = {
   notion: { connected: false, source: null, database_id: null, token_set: false },
   llm: { provider: null, model: "openai/gpt-oss-120b", key_set: false },
 };
-
-export type AssistantQA = {
-  q: string;
-  keywords: string[];
-  answer: string;
-  category: string;
-  evidence: Array<{ text: string; speaker: string; start: number }>;
-};
-
-export const SAMPLE_ASSISTANT_QA: AssistantQA[] = [
-  {
-    q: "How did I do on my last call?",
-    keywords: ["how did", "last call", "score", "did i do"],
-    category: "clarity",
-    answer:
-      "40/100. The seed call opened strong but lost points at 0:09 - the revenue miss came back as 'that's... I mean' - and at 0:27 with a burn-rate projection ('450K a month') stated without backing. The hiring plan at 0:18 was the best moment: concrete and dated.",
-    evidence: [
-      { text: "Three out of twelve? That's... I mean, it's below our forecast.", speaker: "Alex (Founder)", start: 9 },
-      { text: "Look, we've hired a new head of enterprise sales. She starts Monday.", speaker: "Alex (Founder)", start: 18 },
-    ],
-  },
-  {
-    q: "What should I improve?",
-    keywords: ["improve", "fix", "better", "next time"],
-    category: "compliance",
-    answer:
-      "Own the number when it is bad, and never state financials without a source. 'That's... I mean, it's below our forecast' sounds like a concession; 'We closed 3 of 12 - here is the pipeline' sounds like a plan. The 450K burn figure needs a slide behind it.",
-    evidence: [
-      { text: "Three out of twelve? That's... I mean, it's below our forecast.", speaker: "Alex (Founder)", start: 9 },
-      { text: "We're burning about 450K a month. I think we have 11 months.", speaker: "Alex (Founder)", start: 27 },
-    ],
-  },
-  {
-    q: "What are my weaknesses?",
-    keywords: ["weakness", "pattern", "recurring", "again", "weak"],
-    category: "clarity",
-    answer:
-      "Two patterns across the portfolio: numbers without backing (financial claims stated with no source - appears in 3 of 5 calls) and ducking the hard question ('That math doesn't add up' went unanswered in-call).",
-    evidence: [
-      { text: "We're burning about 450K a month. I think we have 11 months.", speaker: "Alex (Founder)", start: 27 },
-      { text: "That math doesn't add up with the revenue drop you mentioned.", speaker: "Sarah (Investor)", start: 31 },
-    ],
-  },
-  {
-    q: "What did we commit to?",
-    keywords: ["commit", "promise", "action item", "follow", "agreed"],
-    category: "action_items",
-    answer:
-      "Two commitments from the seed call: hire the head of enterprise sales (starts Monday) and produce an updated revenue forecast reconciled with the burn rate. The forecast is the open one - the investor asked for it at 0:31.",
-    evidence: [
-      { text: "Look, we've hired a new head of enterprise sales. She starts Monday.", speaker: "Alex (Founder)", start: 18 },
-      { text: "That math doesn't add up with the revenue drop you mentioned.", speaker: "Sarah (Investor)", start: 31 },
-    ],
-  },
-  {
-    q: "What can you answer?",
-    keywords: ["what can", "help", "question", "ask"],
-    category: "clarity",
-    answer:
-      "Ask about your calls: 'How did I do on my last call?', 'What should I improve?', 'What are my weaknesses?', 'What did we commit to?'. Every answer cites the transcript - quote, speaker, and the second.",
-    evidence: [],
-  },
-];

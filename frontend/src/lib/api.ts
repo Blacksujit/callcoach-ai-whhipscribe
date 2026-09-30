@@ -79,6 +79,15 @@ export interface ReportResponse {
   error?: string;
 }
 
+// A job that exists on WhipScribe but has no stored evaluation yet.
+export interface NotAnalyzed {
+  success: false;
+  job_id: string;
+  not_analyzed: true;
+}
+
+export type ReportResult = ReportResponse | NotAnalyzed | null;
+
 export interface CoachInsight {
   priority?: string;
   title?: string;
@@ -131,6 +140,15 @@ export interface UploadStatusResponse {
   error?: string;
 }
 
+// ------------------------------------------------------- fallback labeling
+
+// Fired whenever a fetch falls back to sample data, so pages can label it.
+export function notifyFallback() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("callcoach:fallback"));
+  }
+}
+
 async function postJson<T>(path: string, body?: unknown, method = "POST"): Promise<ActionResult> {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -162,7 +180,10 @@ export async function getJobs(apiKey: string): Promise<ApiJobsResponse> {
     return await res.json();
   } catch (error) {
     console.error("Failed to fetch jobs:", error);
-    if (isDemo()) return SAMPLE_JOBS;
+    if (isDemo()) {
+      notifyFallback();
+      return SAMPLE_JOBS;
+    }
     return { jobs: [], success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
@@ -178,7 +199,10 @@ export async function getJobsWithScores(apiKey: string): Promise<{ jobs: Array<J
     return await res.json();
   } catch (error) {
     console.error("Failed to fetch jobs:", error);
-    if (isDemo()) return { jobs: SAMPLE_JOBS.jobs.map((j) => ({ ...j, score: 40 })) };
+    if (isDemo()) {
+      notifyFallback();
+      return { jobs: SAMPLE_JOBS.jobs.map((j) => ({ ...j, score: 40 })) };
+    }
     return { jobs: [] };
   }
 }
@@ -192,23 +216,36 @@ export async function getTrends(): Promise<TrendsResponse | null> {
     return await res.json();
   } catch (error) {
     console.error("Failed to fetch trends:", error);
-    if (isDemo()) return SAMPLE_TRENDS;
+    if (isDemo()) {
+      notifyFallback();
+      return SAMPLE_TRENDS;
+    }
     return null;
   }
 }
 
-export async function getReport(jobId: string): Promise<ReportResponse | null> {
+export async function getReport(jobId: string): Promise<ReportResult> {
   try {
     const res = await fetch(`${API_BASE}/api/report/${jobId}`);
+    if (res.status === 404) {
+      return { success: false, job_id: jobId, not_analyzed: true };
+    }
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
     return await res.json();
   } catch (error) {
     console.error("Failed to fetch report:", error);
-    if (isDemo()) return SAMPLE_REPORT;
+    if (isDemo()) {
+      notifyFallback();
+      return SAMPLE_REPORT as ReportResponse;
+    }
     return null;
   }
+}
+
+export async function runAnalysis(jobId: string): Promise<ActionResult> {
+  return postJson(`/api/analyze/${jobId}`);
 }
 
 export async function getCoachData(): Promise<CoachDataResponse | null> {
@@ -220,7 +257,10 @@ export async function getCoachData(): Promise<CoachDataResponse | null> {
     return await res.json();
   } catch (error) {
     console.error("Failed to fetch coach data:", error);
-    if (isDemo()) return SAMPLE_COACH_DATA;
+    if (isDemo()) {
+      notifyFallback();
+      return SAMPLE_COACH_DATA;
+    }
     return null;
   }
 }
@@ -234,7 +274,10 @@ export async function getSpeakers(): Promise<SpeakersResponse | null> {
     return await res.json();
   } catch (error) {
     console.error("Failed to fetch speakers:", error);
-    if (isDemo()) return SAMPLE_SPEAKERS;
+    if (isDemo()) {
+      notifyFallback();
+      return SAMPLE_SPEAKERS;
+    }
     return null;
   }
 }
@@ -311,7 +354,10 @@ export async function getConnections(): Promise<ConnectionsResponse | null> {
     return await res.json();
   } catch (error) {
     console.error("Failed to fetch connections:", error);
-    if (isDemo()) return SAMPLE_CONNECTIONS;
+    if (isDemo()) {
+      notifyFallback();
+      return SAMPLE_CONNECTIONS;
+    }
     return null;
   }
 }
@@ -342,4 +388,69 @@ export async function testNotion(): Promise<ActionResult> {
 
 export async function disconnectNotion(): Promise<ActionResult> {
   return postJson("/api/connections/notion", undefined, "DELETE");
+}
+
+// ---------------------------------------------------------------- griot
+
+export interface GriotSource {
+  job_id: string;
+  call: string;
+  speaker: string;
+  start: number;
+  text: string;
+}
+
+export type GriotAskResult =
+  | { ok: true; answer: string; mode: string; sources: GriotSource[]; callsUsed: number }
+  | { ok: false; error: string };
+
+export async function askGriot(question: string): Promise<GriotAskResult> {
+  try {
+    const res = await fetch(`${API_BASE}/api/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok || !payload.success) {
+      return { ok: false, error: payload.error || `HTTP ${res.status}` };
+    }
+    return {
+      ok: true,
+      answer: payload.answer || "",
+      mode: payload.mode || "data",
+      sources: payload.sources || [],
+      callsUsed: typeof payload.calls_used === "number" ? payload.calls_used : 0,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Unable to reach the CallCoach API",
+    };
+  }
+}
+
+// No sample fallback: the widget must stay honest about what the backend has.
+export async function getTrendsDirect(): Promise<TrendsResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/trends-data`, { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function pingBackend(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 9000);
+    const res = await fetch(`${API_BASE}/api/health`, { signal: controller.signal, cache: "no-store" });
+    clearTimeout(timer);
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
