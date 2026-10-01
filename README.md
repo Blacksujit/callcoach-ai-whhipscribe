@@ -50,7 +50,7 @@ flowchart LR
     U --> REC
 
     subgraph FRONTEND["Frontend - Next.js (Vercel)"]
-        PAGES["Dashboard · Live · Trends · Coach\nSpeakers · Report · Connect Center"]
+        PAGES["Dashboard · Trends · Coach\nSpeakers · Report · Connect Center"]
         WIDGET["Griot chat\n(floating, every page)"]
     end
 
@@ -166,7 +166,6 @@ One flow, end to end. WhipScribe handles transcription. CallCoach handles judgme
 
 ```bash
 # 1. Backend (Flask API)
-cd apps/blacksujit/track-4  # or this directory if you cloned the standalone repo
 python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.template .env  # add your WHIPSKRIBE_API_KEY and GROQ_API_KEY
@@ -230,20 +229,20 @@ Deployed at: [Live](https://callcoachai.sujit.top/)
 
 ## What works
 
-- Real transcription via WhipScribe API (upload, poll, fetch result with speakers + timestamps)
-- Four-agent LLM scoring (GROQ `openai/gpt-oss-120b`) with rule-based fallback
-- Evidence-grounded quotes with verified timestamps
-- Cross-call trend analysis: velocity, momentum, recurring issues, action-item lifecycle
-- Speaker-level risk scoring and coaching insights
-- Slack + Notion integrations with live validation
-- MCP server with 4 tools for assistant integration
-- CLI for offline pipeline execution
-- Vercel production deployment with all 8 routes prerendered
+- Real transcription via WhipScribe API (upload / paste-link, poll, fetch result with speakers + timestamps)
+- Four-agent LLM scoring (GROQ `openai/gpt-oss-120b`) with rule-based fallback; evidence quotes verified against real segments
+- Spotter real-time coaching and Griot grounded Q&A over the stored library
+- Cross-call intelligence: velocity, momentum, recurring clusters, action-item closure, speaker risk
+- One-click Connect Center: Slack, Notion, HubSpot with live verification and auto-delivery (logged per attempt)
+- Deeper reads: conversation dynamics, commitment ledger, WhipScribe insights, custom-rubric rescore
+- MCP server (4 tools) and CLI for offline pipeline execution
+- `seed_evaluations.db` with 8 real scored calls - no empty dashboard
+- Vercel production deployment with all 7 routes prerendered
 
 ## What doesn't work yet
 
 - No real user has tested it — everything is engineer-verified
-- Synchronous upload polling (long recordings hold the request open)
+- Uploads run in a background thread, but a very long recording still ties up a worker (production would queue and poll)
 - No authentication on the API
 - SQLite on free tiers is ephemeral
 - Speaker diarization quality depends on WhipScribe's output

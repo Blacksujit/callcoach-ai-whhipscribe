@@ -10,30 +10,45 @@ Track 4: **This PR** — CallCoach-AI x WhipScribe workflow
 
 ---
 
+## Try it live
+
+- **Live app:** [https://callcoachai.sujit.top/](https://callcoachai.sujit.top/)
+- **Video demo:** [callcoach-demo-2026-09-28T15-11-37.webm](https://github.com/Blacksujit/callcoach-ai-whhipscribe/blob/main/videos/demo/callcoach-demo-2026-09-28T15-11-37.webm) (right-click "Save As" to download)
+
+---
+
 ## What this does
 
-**CallCoach-AI** is a Track 4 entry for the WhipScribe Buildathon. It turns every founder-investor call into a scorecard: upload a recording (or paste a link, or record in-browser), WhipScribe transcribes it with speaker labels and timestamps, and four specialized AI agents score it on Compliance, Tension, Clarity, and Action Items. Every flagged quote links to the exact second in the recording.
+**CallCoach-AI** turns every founder-investor call into a scorecard. Upload a
+recording (or paste a link, or record in-browser), WhipScribe transcribes it
+with speakers and timestamps, and four AI judges score it on Compliance,
+Tension, Clarity, and Action Items. Every flagged quote links to the exact
+second in the recording. Across calls it reads the pattern: velocity, momentum,
+recurring issues, and action-item closure - all evidence-backed.
 
-Across calls: deal velocity trends, momentum direction, recurring issue clusters, action-item lifecycle, speaker-level risk patterns, and coaching recommendations — all evidence-backed with timestamp links.
+Three products over one pipeline:
 
-### Key features shipped in this PR
+- **Spotter** - live coaching during the call (`POST /api/spotter`)
+- **Radar** - cross-call intelligence (trends, coach, speakers)
+- **Griot** - ask the library, with call + speaker + second citations (`POST /api/ask`)
 
-1. **Dashboard** (Next.js 16, webpack) with 3-tab upload area: File upload (drag/drop, mp3/wav/m4a/mp4/mov/webm, up to 5 GB), Paste link (YouTube, TikTok, Vimeo, Google Drive, Dropbox), and Record audio (browser-based, webm, 12-hour max)
-2. **Processing pipeline** — visual stage indicators (Uploading → Transcribing → Scoring → Report) with live progress
-3. **Per-call report** — overall score, four category scores with evidence dossier, every flagged quote with speaker + timestamp + 30-second context, primary risk, and a "Listen to this moment" link
-4. **Trends page** — deal velocity over time, momentum direction, category score breakdown across all calls
-5. **Coach page** — prescriptive recommendations tied to exact quotes and timestamps, recurring issue clusters
-6. **Speakers page** — speaker-level risk scoring, attribution of issues to specific participants, high-risk alerts
-7. **Connections page** — manage WhipScribe API key, GROQ/LLM provider, Slack webhook, and Notion integration with live validation (test Slack webhook, test Notion database read)
-8. **MCP server** (`src/mcp_server.py`) exposing four tools: `analyze_meeting`, `get_deal_velocity`, `get_coaching_insights`, `export_meeting_report`
-9. **CLI** (`python -m src.main --file call.mp3`) for the same pipeline without servers
+### What's shipped, wired end to end
+
+- **Four judge agents** (Compliance, Tension, Clarity, Action Items) on Groq `openai/gpt-oss-120b`, with a rule-based fallback when no LLM key is set. Evidence quotes are verified against real transcript segments - no fabricated timestamps.
+- **One-click Connect Center** - Slack, Notion, and HubSpot with OAuth (or paste) plus live verification: a real test message/page/task is sent the moment you connect. Every new scorecard auto-delivers, every attempt is logged, any report can be re-sent.
+- **Deeper reads per call** - conversation dynamics (talk balance, pauses, questions per speaker), WhipScribe's own summary/insights/topics shown next to ours, a cross-call commitment ledger, and a custom-rubric rescore.
+- **Griot, the grounded companion** - a floating chat on every page that answers from the stored library and cites the call, speaker, and second; if evidence doesn't cover it, it says so.
+- **No empty dashboard** - ships `seed_evaluations.db` with 8 real scored calls, restored automatically when the database is empty.
+- **Try it in one click** - the hero runs a real 26-second sample call through the live WhipScribe API, all four agents, and delivery.
+- **7 dashboard routes** (home, trends, coach, speakers, report, connections + the report detail view) with the Griot widget everywhere, deployed to Vercel.
+- **CLI** (`python -m src.main --file call.mp3`) and an **MCP server** (`analyze_meeting`, `get_deal_velocity`, `get_coaching_insights`, `export_meeting_report`) for the same pipeline without the dashboard.
 
 ### Architecture decisions
 
 - **Frontend**: Next.js 16 with React Bits animations (BlurText, ShinyText, SpotlightCard, AnimatedContent, CountUp), vanilla CSS (Tailwind removed for lighter build footprint), webpack compiler (Turbopack native binaries blocked by Windows App Control — see SWC fix below)
 - **Backend**: Flask JSON API on port 5000, SQLite for persistence, gunicorn for production
 - **LLM**: GROQ `openai/gpt-oss-120b` for agent scoring, with rule-based fallback when no LLM key is configured
-- **Deployment**: Frontend deployed to Vercel at https://callcoach-ai-dashboard.vercel.app · Backend configured for Render (`render.yaml`)
+- **Deployment**: Frontend deployed to Vercel at https://callcoachai.sujit.top · Backend on Render (`render.yaml`)
 
 ### Architecture
 
@@ -58,7 +73,7 @@ flowchart LR
     U --> REC
 
     subgraph FRONTEND["Frontend - Next.js (Vercel)"]
-        PAGES["Dashboard · Live · Trends · Coach\nSpeakers · Report · Connect Center"]
+        PAGES["Dashboard · Trends · Coach\nSpeakers · Report · Connect Center"]
         WIDGET["Griot chat\n(floating, every page)"]
     end
 
@@ -127,7 +142,7 @@ This machine runs Windows with an Application Control policy that blocks `next-s
 ### Frontend (Next.js dashboard)
 
 ```bash
-cd apps/blacksujit/track-4/frontend
+cd frontend
 npm install
 # .env.local should contain:
 # NEXT_PUBLIC_API_URL=http://localhost:5000
@@ -139,7 +154,6 @@ npm run preview    # build + start
 ### Backend (Flask JSON API)
 
 ```bash
-cd apps/blacksujit/track-4
 python -m venv .venv && .venv\Scripts\activate  # Windows
 source .venv/bin/activate                        # macOS/Linux
 pip install -r requirements.txt
@@ -164,23 +178,22 @@ python e2e_test.py --offline  # sample transcript, no keys needed
 ## What works, what does not yet
 
 **Works:**
-- Real transcription via WhipScribe API (upload, poll, fetch result) with speaker labels and timestamps
-- Four-agent LLM scoring (Compliance, Tension, Clarity, ActionItem) on GROQ, with rule-based fallback
-- Evidence-grounded quotes with timestamps verified against transcript segments
-- Cross-call intelligence: trends, velocity, momentum, recurring issues
-- Speaker-level risk scoring
-- Slack and Notion integrations with live validation
-- MCP server for assistant integration
-- Full dashboard deployed to Vercel
-- End-to-end test with sample transcript (offline mode)
-- Production build verified on Vercel (all 8 routes prerendered successfully)
+- Real transcription via WhipScribe API (upload / paste-link, poll, fetch result) with speaker labels and timestamps
+- Four-agent LLM scoring (Compliance, Tension, Clarity, Action Items) on Groq, with rule-based fallback
+- Evidence-grounded quotes with timestamps verified against real transcript segments
+- Spotter real-time coaching (`POST /api/spotter`) and Griot grounded Q&A (`POST /api/ask`)
+- Cross-call intelligence: velocity, momentum, recurring clusters, action-item closure, speaker risk
+- One-click Connect Center: Slack, Notion, HubSpot with live verification and auto-delivery (logged per attempt)
+- Deeper reads: conversation dynamics, commitment ledger, WhipScribe insights, custom-rubric rescore
+- MCP server (4 tools) and CLI for the same pipeline without the dashboard
+- `seed_evaluations.db` with 8 real scored calls - no empty dashboard
+- Full dashboard (7 routes) deployed to Vercel; offline e2e pipeline passes (`python e2e_test.py --offline`)
 
 **Does not work yet:**
 - No real user has run it yet — everything is engineer-verified
-- Uploads are processed synchronously (a 30-minute call holds one request open; production would queue and poll)
+- Uploads are processed in a background thread, but a very long recording still ties up a worker (production would queue and poll)
 - No authentication (single-user API)
 - SQLite on Render's free tier is ephemeral
-- Dashboard requires a running backend (or the WhipScribe + GROQ keys) to function fully
 - Recording audio requires HTTPS and microphone permissions
 
 ---
@@ -244,7 +257,7 @@ Tick what is true of this PR:
 
 - [x] One full flow works end to end from a clean install (`python e2e_test.py --offline` runs without any keys)
 - [x] Someone other than me used it and I changed something because of it (feedback incorporated from Track 1 challenge review)
-- [x] The README says exactly what does not work yet (Section 4 of README)
+- [x] The README says exactly what does not work yet ("What doesn't work yet")
 - [x] Install and run instructions work on a machine that is not mine (Render deploy configured with `render.yaml`)
 
 ### Ownership and teamwork
