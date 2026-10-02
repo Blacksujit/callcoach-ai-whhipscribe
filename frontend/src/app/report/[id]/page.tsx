@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
-import { getReport, runAnalysis, deliverJob, getConnections, getRubrics, rubricScore, ReportResult, type ConnectCenterResponse, type RubricPreset } from "@/lib/api";
+import { getReport, runAnalysis, getUploadStatus, deliverJob, getConnections, getRubrics, rubricScore, ReportResult, type ConnectCenterResponse, type RubricPreset } from "@/lib/api";
 import { SlackMark, NotionMark, HubSpotMark } from "@/components/BrandIcons";
 import PageTransition from "@/components/PageTransition";
 import ScoreRing from "@/components/charts/ScoreRing";
@@ -183,18 +183,39 @@ export default function ReportPage() {
   async function handleAnalyze() {
     if (!jobId || analyzing) return;
     setAnalyzing(true);
-    const result = await runAnalysis(jobId);
-    if (result.success) {
-      const data = await getReport(jobId);
-      if (data && data.success && !("not_analyzed" in data)) {
-        setReport(data);
+    setError(null);
+
+    const started = await runAnalysis(jobId);
+    if (!started.success) {
+      setAnalyzing(false);
+      setError(started.error || "Could not start scoring.");
+      return;
+    }
+
+    for (let attempt = 0; attempt < 120; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const status = await getUploadStatus(jobId);
+      if (!status) continue;
+      if (status.stage === "done") {
+        const data = await getReport(jobId);
+        if (data && data.success && !("not_analyzed" in data)) {
+          setReport(data);
+          setAnalyzing(false);
+          return;
+        }
         setAnalyzing(false);
+        setError("Scoring finished but the report could not be loaded.");
+        return;
+      }
+      if (status.stage === "error") {
+        setAnalyzing(false);
+        setError(status.error || status.message || "Scoring failed - give it a moment and try again.");
         return;
       }
     }
+
     setAnalyzing(false);
-    setError(result.error || "Scoring failed - give it a moment and try again.");
-    setReport(null);
+    setError("Scoring is taking longer than expected. Check back in a minute.");
   }
 
   if (loading) {

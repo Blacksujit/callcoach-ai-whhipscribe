@@ -592,6 +592,29 @@ def _set_upload_state(job_id, **fields):
         state["updated_at"] = time.time()
 
 
+def _score_and_store(job_id, api_key, transcript, name=None, pending_items=None, extras=None):
+    """Run the four-agent evaluation, store it, and dispatch deliveries.
+
+    Shared by the upload worker and the analyze worker. Returns the inner
+    evaluation dict so callers can report the score.
+    """
+    provider, llm_key, model = get_eval_settings()
+    evaluation = evaluate(
+        transcript, api_key=llm_key, model=model, provider=provider,
+        pending_items=pending_items,
+        session_summary=(extras or {}).get("session_summary"),
+        key_moments=(extras or {}).get("key_moments"),
+        audio_url=(extras or {}).get("audio_url"),
+    )
+    _attach_whip_extras(evaluation, extras or {})
+    store.save_evaluation(job_id, transcript, evaluation, meeting_name=name)
+    core = _core_eval(evaluation)
+    _dispatch_async(job_id, core, transcript, name)
+    for item in core.get("resolved_items", []):
+        store.resolve_action_item(item.get("text", ""), job_id=job_id)
+    return core
+
+
 def _process_upload(api_key, job_id, poll_timeout=UPLOAD_POLL_TIMEOUT, name=None):
     """Background worker: transcribe, score, store. Updates the live stage."""
     try:
@@ -601,22 +624,8 @@ def _process_upload(api_key, job_id, poll_timeout=UPLOAD_POLL_TIMEOUT, name=None
         _set_upload_state(job_id, stage="scoring", message="Four agents are reading the transcript.")
 
         pending_items = store.get_unresolved_action_items()
-        provider, llm_key, model = get_eval_settings()
         extras = _whip_extras(api_key, job_id)
-        evaluation = evaluate(
-            transcript, api_key=llm_key, model=model,
-            provider=provider, pending_items=pending_items,
-            session_summary=extras.get("session_summary"),
-            key_moments=extras.get("key_moments"),
-            audio_url=extras.get("audio_url"),
-        )
-        _attach_whip_extras(evaluation, extras)
-        store.save_evaluation(job_id, transcript, evaluation, meeting_name=name)
-
-        core = _core_eval(evaluation)
-        _dispatch_async(job_id, core, transcript, name)
-        for item in core.get("resolved_items", []):
-            store.resolve_action_item(item.get("text", ""), job_id=job_id)
+        core = _score_and_store(job_id, api_key, transcript, name=name, pending_items=pending_items, extras=extras)
 
         _set_upload_state(
             job_id,
@@ -892,34 +901,45 @@ def api_speakers():
     })
 
 
+def _analyze_worker(api_key, job_id):
+    """Background worker: score one already-transcribed job and store it."""
+    try:
+        _set_upload_state(job_id, stage="scoring", message="Four agents are reading the transcript.")
+        transcript = get_transcript(api_key, job_id)
+        pending_items = store.get_unresolved_action_items()
+        extras = _whip_extras(api_key, job_id)
+        core = _score_and_store(job_id, api_key, transcript, pending_items=pending_items, extras=extras)
+        _set_upload_state(
+            job_id,
+            stage="done",
+            message="Report ready.",
+            score=core.get("overall_score", 0),
+            segments=len(transcript.get("segments", [])),
+        )
+    except Exception as exc:
+        _set_upload_state(job_id, stage="error", message=str(exc))
+
+
 @app.route("/api/analyze/<job_id>", methods=["POST"])
 def api_analyze(job_id):
-    """API endpoint: analyze a single meeting and return JSON."""
+    """API endpoint: analyze a single meeting and return JSON.
+
+    Scoring runs in a background thread and returns immediately; the caller
+    polls /api/upload/status/<job_id> until stage is "done" or "error". This
+    keeps the request short so the Vercel/Render proxy never times out (502)
+    while the four agents plus WhipScribe extras run.
+    """
     api_key = get_api_key()
     if not api_key:
         return jsonify({"success": False, "error": "No API key configured"}), 401
 
-    provider, llm_key, model = get_eval_settings()
-    try:
-        transcript = get_transcript(api_key, job_id)
-        extras = _whip_extras(api_key, job_id)
-        evaluation = evaluate(
-            transcript, api_key=llm_key, model=model, provider=provider,
-            session_summary=extras.get("session_summary"),
-            key_moments=extras.get("key_moments"),
-            audio_url=extras.get("audio_url"),
-        )
-        _attach_whip_extras(evaluation, extras)
-        store.save_evaluation(job_id, transcript, evaluation)
-        core = _core_eval(evaluation)
-        _dispatch_async(job_id, core, transcript)
-        return jsonify({
-            "success": True,
-            "job_id": job_id,
-            "score": core.get("overall_score", 0),
-        })
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    with UPLOAD_LOCK:
+        already_running = (UPLOAD_JOBS.get(job_id) or {}).get("stage") in ("transcribing", "scoring")
+    if already_running:
+        return jsonify({"success": True, "job_id": job_id, "stage": "scoring", "started": False}), 202
+
+    threading.Thread(target=_analyze_worker, args=(api_key, job_id), daemon=True).start()
+    return jsonify({"success": True, "job_id": job_id, "stage": "scoring", "started": True}), 202
 
 
 _SWEEP = {"running": False, "evaluated": 0, "skipped": 0, "total": 0,

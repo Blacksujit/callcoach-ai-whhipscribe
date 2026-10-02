@@ -35,73 +35,8 @@ two outside services (WhipScribe for transcription, Groq for the LLM judges),
 persists everything in SQLite, and pushes the scorecard out to Slack / Notion /
 HubSpot.
 
-```mermaid
-flowchart LR
-    U["User\n(Sales Manager / Team Lead)"]
 
-    subgraph INPUT["Input Layer"]
-        FILE["Upload file\n(mp3/wav/m4a/mp4/mov/webm)"]
-        URL["Paste link\n(YouTube/TikTok/Drive)"]
-        REC["Record audio\n(in-browser, mic)"]
-    end
-
-    U --> FILE
-    U --> URL
-    U --> REC
-
-    subgraph FRONTEND["Frontend - Next.js (Vercel)"]
-        PAGES["Dashboard · Live · Trends · Coach\nSpeakers · Report · Connect Center"]
-        WIDGET["Griot chat\n(floating, every page)"]
-    end
-
-    FILE --> PAGES
-    URL --> PAGES
-    REC --> PAGES
-    PAGES --> WIDGET
-
-    subgraph BACKEND["Backend - Flask API (Render)"]
-        API["app.py  /api/* routes"]
-        subgraph CORE["Scoring core (src/core)"]
-            EVAL["evaluator.py\nfour LLM agents (judges)\n+ rule-based fallback"]
-            INSIGHT["compare · metrics · sentiment\ndynamics · commitments · rubric"]
-        end
-        STORE[("SQLite\n(evaluations · action_items\nsettings · deliveries)")]
-        API --> EVAL
-        API --> INSIGHT
-        EVAL --> STORE
-        INSIGHT --> STORE
-    end
-
-    PAGES -->|"HTTP /api/* (rewrite)"| API
-
-    subgraph EXTERNAL["External APIs"]
-        WHIP["WhipScribe API\nsubmit file/URL → poll job\n→ transcript + speakers + timestamps\n+ summary · insights · key moments"]
-        GROQ["Groq API\n(openai/gpt-oss-120b)\nLLM-as-a-judge scoring\n+ OpenAI / Anthropic alternates"]
-    end
-
-    API -->|"transcribe"| WHIP
-    WHIP -->|"transcript JSON"| EVAL
-    EVAL -->|"grading prompt"| GROQ
-    GROQ -->|"scores + evidence"| EVAL
-
-    subgraph DELIVERY["Delivery Layer"]
-        SLACK["Slack\n(OAuth or webhook)"]
-        NOTION["Notion\n(OAuth or token + database)"]
-        HUB["HubSpot\n(private-app token → tasks)"]
-    end
-
-    EVAL -->|"scorecard"| SLACK
-    EVAL -->|"scorecard"| NOTION
-    EVAL -->|"tasks"| HUB
-
-    subgraph AUX["Other entry points"]
-        CLI["CLI\npython -m src.main"]
-        MCPSRV["MCP server\nsrc/mcp_server.py (4 tools)"]
-    end
-
-    CLI --> EVAL
-    MCPSRV --> STORE
-```
+![architecture](./assets/mermaid-diagram%20(2).png)
 
 ## Features
 
@@ -166,7 +101,6 @@ One flow, end to end. WhipScribe handles transcription. CallCoach handles judgme
 
 ```bash
 # 1. Backend (Flask API)
-cd apps/blacksujit/track-4  # or this directory if you cloned the standalone repo
 python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.template .env  # add your WHIPSKRIBE_API_KEY and GROQ_API_KEY
@@ -230,20 +164,20 @@ Deployed at: [Live](https://callcoachai.sujit.top/)
 
 ## What works
 
-- Real transcription via WhipScribe API (upload, poll, fetch result with speakers + timestamps)
-- Four-agent LLM scoring (GROQ `openai/gpt-oss-120b`) with rule-based fallback
-- Evidence-grounded quotes with verified timestamps
-- Cross-call trend analysis: velocity, momentum, recurring issues, action-item lifecycle
-- Speaker-level risk scoring and coaching insights
-- Slack + Notion integrations with live validation
-- MCP server with 4 tools for assistant integration
-- CLI for offline pipeline execution
-- Vercel production deployment with all 8 routes prerendered
+- Real transcription via WhipScribe API (upload / paste-link, poll, fetch result with speakers + timestamps)
+- Four-agent LLM scoring (GROQ `openai/gpt-oss-120b`) with rule-based fallback; evidence quotes verified against real segments
+- Spotter real-time coaching and Griot grounded Q&A over the stored library
+- Cross-call intelligence: velocity, momentum, recurring clusters, action-item closure, speaker risk
+- One-click Connect Center: Slack, Notion, HubSpot with live verification and auto-delivery (logged per attempt)
+- Deeper reads: conversation dynamics, commitment ledger, WhipScribe insights, custom-rubric rescore
+- MCP server (4 tools) and CLI for offline pipeline execution
+- `seed_evaluations.db` with 8 real scored calls - no empty dashboard
+- Vercel production deployment with all 7 routes prerendered
 
 ## What doesn't work yet
 
 - No real user has tested it — everything is engineer-verified
-- Synchronous upload polling (long recordings hold the request open)
+- Uploads run in a background thread, but a very long recording still ties up a worker (production would queue and poll)
 - No authentication on the API
 - SQLite on free tiers is ephemeral
 - Speaker diarization quality depends on WhipScribe's output
