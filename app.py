@@ -156,6 +156,19 @@ def _whip_error_message(exc):
     return str(exc)
 
 
+def _whip_error_status(exc):
+    """Map a WhipScribe API error to the HTTP status we surface to the client."""
+    import requests as _requests
+
+    if isinstance(exc, _requests.exceptions.HTTPError):
+        status = exc.response.status_code if exc.response is not None else None
+        if status in (401, 402, 429):
+            return status
+        if status is not None and 500 <= status < 600:
+            return 502
+    return 502
+
+
 def _core_eval(evaluation):
     """Return the inner evaluation dict (LLM pipeline output is wrapped)."""
     if not isinstance(evaluation, dict):
@@ -705,7 +718,7 @@ def api_upload():
     try:
         job_id = submit_file(api_key, filepath)
     except Exception as exc:
-        return jsonify({"success": False, "error": _whip_error_message(exc)}), 502
+        return jsonify({"success": False, "error": _whip_error_message(exc)}), _whip_error_status(exc)
     finally:
         try:
             os.remove(filepath)
@@ -1596,7 +1609,7 @@ def api_sample_run():
     try:
         job_id = submit_file(api_key, sample_path)
     except Exception as exc:  # noqa: BLE001
-        return jsonify({"success": False, "error": _whip_error_message(exc)}), 502
+        return jsonify({"success": False, "error": _whip_error_message(exc)}), _whip_error_status(exc)
     _set_upload_state(job_id, stage="transcribing", message="WhipScribe is transcribing the sample call.")
     threading.Thread(
         target=_process_upload,
