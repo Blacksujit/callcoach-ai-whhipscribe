@@ -35,73 +35,8 @@ two outside services (WhipScribe for transcription, Groq for the LLM judges),
 persists everything in SQLite, and pushes the scorecard out to Slack / Notion /
 HubSpot.
 
-```mermaid
-flowchart LR
-    U["User\n(Sales Manager / Team Lead)"]
 
-    subgraph INPUT["Input Layer"]
-        FILE["Upload file\n(mp3/wav/m4a/mp4/mov/webm)"]
-        URL["Paste link\n(YouTube/TikTok/Drive)"]
-        REC["Record audio\n(in-browser, mic)"]
-    end
-
-    U --> FILE
-    U --> URL
-    U --> REC
-
-    subgraph FRONTEND["Frontend - Next.js (Vercel)"]
-        PAGES["Dashboard · Trends · Coach\nSpeakers · Report · Connect Center"]
-        WIDGET["Griot chat\n(floating, every page)"]
-    end
-
-    FILE --> PAGES
-    URL --> PAGES
-    REC --> PAGES
-    PAGES --> WIDGET
-
-    subgraph BACKEND["Backend - Flask API (Render)"]
-        API["app.py  /api/* routes"]
-        subgraph CORE["Scoring core (src/core)"]
-            EVAL["evaluator.py\nfour LLM agents (judges)\n+ rule-based fallback"]
-            INSIGHT["compare · metrics · sentiment\ndynamics · commitments · rubric"]
-        end
-        STORE[("SQLite\n(evaluations · action_items\nsettings · deliveries)")]
-        API --> EVAL
-        API --> INSIGHT
-        EVAL --> STORE
-        INSIGHT --> STORE
-    end
-
-    PAGES -->|"HTTP /api/* (rewrite)"| API
-
-    subgraph EXTERNAL["External APIs"]
-        WHIP["WhipScribe API\nsubmit file/URL → poll job\n→ transcript + speakers + timestamps\n+ summary · insights · key moments"]
-        GROQ["Groq API\n(openai/gpt-oss-120b)\nLLM-as-a-judge scoring\n+ OpenAI / Anthropic alternates"]
-    end
-
-    API -->|"transcribe"| WHIP
-    WHIP -->|"transcript JSON"| EVAL
-    EVAL -->|"grading prompt"| GROQ
-    GROQ -->|"scores + evidence"| EVAL
-
-    subgraph DELIVERY["Delivery Layer"]
-        SLACK["Slack\n(OAuth or webhook)"]
-        NOTION["Notion\n(OAuth or token + database)"]
-        HUB["HubSpot\n(private-app token → tasks)"]
-    end
-
-    EVAL -->|"scorecard"| SLACK
-    EVAL -->|"scorecard"| NOTION
-    EVAL -->|"tasks"| HUB
-
-    subgraph AUX["Other entry points"]
-        CLI["CLI\npython -m src.main"]
-        MCPSRV["MCP server\nsrc/mcp_server.py (4 tools)"]
-    end
-
-    CLI --> EVAL
-    MCPSRV --> STORE
-```
+![architecture](./assets/mermaid-diagram%20(2).png)
 
 ## Features
 
