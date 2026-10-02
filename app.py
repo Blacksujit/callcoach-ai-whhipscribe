@@ -133,6 +133,29 @@ def get_eval_settings():
     return provider, api_key, model
 
 
+def _whip_error_message(exc):
+    """Turn a WhipScribe API error into a clear, human message.
+
+    A 402 from WhipScribe means the account (free "guest" plan) has no
+    transcription credits - surfacing it as a 502 "bad gateway" hides the
+    real problem and makes the app look broken.
+    """
+    import requests as _requests
+
+    if isinstance(exc, _requests.exceptions.HTTPError):
+        resp = exc.response
+        status = resp.status_code if resp is not None else None
+        if status == 402:
+            return "WhipScribe account is out of transcription credits (402 Payment Required). Add credits or upgrade the plan to transcribe new recordings."
+        if status == 401:
+            return "WhipScribe rejected the API key (401 Unauthorized)."
+        if status == 429:
+            return "WhipScribe is rate-limiting requests (429 Too Many Requests). Try again shortly."
+        if status is not None:
+            return f"WhipScribe returned HTTP {status}."
+    return str(exc)
+
+
 def _core_eval(evaluation):
     """Return the inner evaluation dict (LLM pipeline output is wrapped)."""
     if not isinstance(evaluation, dict):
@@ -682,7 +705,7 @@ def api_upload():
     try:
         job_id = submit_file(api_key, filepath)
     except Exception as exc:
-        return jsonify({"success": False, "error": str(exc)}), 502
+        return jsonify({"success": False, "error": _whip_error_message(exc)}), 502
     finally:
         try:
             os.remove(filepath)
@@ -1573,7 +1596,7 @@ def api_sample_run():
     try:
         job_id = submit_file(api_key, sample_path)
     except Exception as exc:  # noqa: BLE001
-        return jsonify({"success": False, "error": f"WhipScribe rejected the sample upload: {exc}"}), 502
+        return jsonify({"success": False, "error": _whip_error_message(exc)}), 502
     _set_upload_state(job_id, stage="transcribing", message="WhipScribe is transcribing the sample call.")
     threading.Thread(
         target=_process_upload,
