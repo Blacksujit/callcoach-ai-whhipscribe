@@ -57,7 +57,7 @@ Every new scorecard goes to **Slack**, **Notion** or **HubSpot** automatically. 
 
 ## Try it
 
-1. Open **[callcoachai.sujit.top](https://callcoachai.sujit.top/)**.
+1. Open **[Live app](https://callcoachai.sujit.top/)**.
 2. Click **Score a sample call** to open a real, fully scored call instantly.
 3. Or **upload your own**: audio or video, a file or a link. You watch it go from transcribing to scored to done.
 
@@ -67,21 +67,9 @@ No sign-up needed to try it.
 
 ## How it works
 
-```
-Your recording
-   │
-   ▼
-WhipScribe ─── transcript, speakers, timestamps
-   │
-   ▼
-Four AI reviewers ─── compliance · tension · clarity · action items
-   │
-   ▼
-Quote check ─── every flagged line is matched back to the transcript
-   │
-   ▼
-Your scorecard ─── score, top risk, playable evidence  →  Slack · Notion · HubSpot
-```
+
+[arcitecture diagram](<assets/mermaid-diagram (2).png>)
+
 
 - **Evidence over opinion.** Every quote is checked against the transcript. A line that can't be found is marked unverified and never shown as fact.
 - **Your library, searchable.** Griot searches your calls through the [WhipScribe](https://whipscribe.com) MCP server and only answers from what was actually said.
