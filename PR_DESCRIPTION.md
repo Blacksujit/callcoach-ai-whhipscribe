@@ -1,71 +1,52 @@
-## Tracks
+## Track - 4 : CallCoach-AI X Whipscribe
 
-**Track** (0: my current work and repos / 1: UI fix / 2: desktop app / 3: Drive, bulk upload, search / 4: workflow)
 
-Track 0: [Blacksujit](https://github.com/Blacksujit) · [LinkedIn](https://linkedin.com/in/nirmalsujit541)
+**CallCoach-AI X WhipScribe** :  [Live App](https://callcoachai.sujit.top/)
 
-Track 1: UI bug found on mobile transcript reader — filed in Challenge 01 proposal
-
-Track 4: **This PR** — CallCoach-AI x WhipScribe workflow
+**Product Demo** : [Video Demo](https://videotourl.com/videos/1790703784383-893d45c0-0e34-4ade-84b1-0c732fbc65c0.webm)
 
 ---
 
-## Try it live
+## What this Solves:
 
-- **Live app:** [https://callcoachai.sujit.top/](https://callcoachai.sujit.top/)
-- **Video demo:** [callcoach-demo-2026-09-28T15-11-37.webm](https://github.com/Blacksujit/callcoach-ai-whhipscribe/blob/main/videos/demo/callcoach-demo-2026-09-28T15-11-37.webm) (right-click "Save As" to download)
+CallCoach-AI takes a recording and scores it like a manager would — **not just "here's a summary," but *where did the pitch break, what was promised and by whom, and is the team actually improving across calls.***
 
----
+Upload a file, paste a link, or record in the browser. WhipScribe transcribes it. Four agents score it (compliance, tension, clarity, action items). Every flagged quote links to the exact second. Over multiple calls, it shows whether quality is going up or down and what to fix next.
 
-## What this does
+## What's in this PR:
 
-**CallCoach-AI** turns every founder-investor call into a scorecard. Upload a
-recording (or paste a link, or record in-browser), WhipScribe transcribes it
-with speakers and timestamps, and four AI judges score it on Compliance,
-Tension, Clarity, and Action Items. Every flagged quote links to the exact
-second in the recording. Across calls it reads the pattern: velocity, momentum,
-recurring issues, and action-item closure - all evidence-backed.
+### CallCoach Impact Features:
 
-Three products over one pipeline:
+1.) **⚖️ LLM as the judge :** The transcript is not summarized. It is graded against a rubric by four specialist agents, each a focused judge on one dimension:
+   - **Compliance** - was every promise, guarantee, and commitment checked and tracked?
+   - **Tension** - where did the investor hesitate, and what was said right before?
+   - **Clarity** - was the ask clear, the narrative consistent, the numbers concrete?
+   - **Action Items** - what was promised, by whom, and will any of it land?
 
-- **Spotter** - live coaching during the call (`POST /api/spotter`)
-- **Radar** - cross-call intelligence (trends, coach, speakers)
-- **Griot** - ask the library, with call + speaker + second citations (`POST /api/ask`)
+2.)  **📊 Four agents, one report** :  The four scores fold into a single scorecard: an overall number, four category bars, the one primary risk (the issue that cost the most points), and every flagged quote with its speaker and timestamp. Every quote is verified against a real transcript segment before it is shown - no fabricated evidence, no guessed timestamps.
 
-### What's shipped, wired end to end
+3.) **📈 Coaching intelligence :** A single call gives a diagnosis. Multiple calls give a trend line:
+   - Deal velocity and momentum - is the pitch sharpening, or repeating the same flaw?
+   - Recurring issue clusters and action-item closure across calls.
+   - Speaker-level risk, plus a coaching plan and a custom-rubric rescore.
+   - **Spotter** coaches *during* the call and **Griot** answers any question about the whole library with call + speaker + second citations.
 
-- **Four judge agents** (Compliance, Tension, Clarity, Action Items) on Groq `openai/gpt-oss-120b`, with a rule-based fallback when no LLM key is set. Evidence quotes are verified against real transcript segments - no fabricated timestamps.
-- **One-click Connect Center** - Slack, Notion, and HubSpot with OAuth (or paste) plus live verification: a real test message/page/task is sent the moment you connect. Every new scorecard auto-delivers, every attempt is logged, any report can be re-sent.
-- **Deeper reads per call** - conversation dynamics (talk balance, pauses, questions per speaker), WhipScribe's own summary/insights/topics shown next to ours, a cross-call commitment ledger, and a custom-rubric rescore.
-- **Griot, the grounded companion** - a floating chat on every page that answers from the stored library and cites the call, speaker, and second; if evidence doesn't cover it, it says so.
-- **No empty dashboard** - ships `seed_evaluations.db` with 8 real scored calls, restored automatically when the database is empty.
-- **Try it in one click** - the hero runs a real 26-second sample call through the live WhipScribe API, all four agents, and delivery.
-- **7 dashboard routes** (home, trends, coach, speakers, report, connections + the report detail view) with the Griot widget everywhere, deployed to Vercel.
-- **CLI** (`python -m src.main --file call.mp3`) and an **MCP server** (`analyze_meeting`, `get_deal_velocity`, `get_coaching_insights`, `export_meeting_report`) for the same pipeline without the dashboard.
+4.) **🔌 One-click Connect Center :** Slack, Notion, and HubSpot with OAuth (or paste) and live verification - a real test message, page, or task is sent the moment you connect. Every new scorecard auto-delivers (score, quotes, commitments, report link), every attempt is logged, and any report can be re-sent.
 
-### Architecture decisions
+5.) **📦 No empty dashboard :** Ships `seed_evaluations.db` - 8 real scored calls restored automatically, plus a one-click 26-second sample call that runs the live WhipScribe API end to end.
 
-- **Frontend**: Next.js 16 with React Bits animations (BlurText, ShinyText, SpotlightCard, AnimatedContent, CountUp), vanilla CSS (Tailwind removed for lighter build footprint), webpack compiler (Turbopack native binaries blocked by Windows App Control — see SWC fix below)
-- **Backend**: Flask JSON API on port 5000, SQLite for persistence, gunicorn for production
-- **LLM**: GROQ `openai/gpt-oss-120b` for agent scoring, with rule-based fallback when no LLM key is configured
-- **Deployment**: Frontend deployed to Vercel at https://callcoachai.sujit.top · Backend on Render (`render.yaml`)
+6.) **💻 CLI + MCP :** Process any recordings, calls, audios, investor meetings, without leaving your terminal, completely offline - supports local LLMs via Ollama. An MCP server exposes `analyze_meeting`, `get_deal_velocity`, `get_coaching_insights`, and `export_meeting_report`.
 
 ### Architecture
 
-One product, four layers. The dashboard calls the Flask API over `/api/*`
-(Vercel rewrites the path to Render). The API hands audio to **WhipScribe for
-transcription**, then hands the transcript to **Groq, which acts as the LLM
-judge** - four specialist agents score Compliance, Tension, Clarity and Action
-Items. Results land in SQLite and are pushed out to Slack, Notion and HubSpot.
-
 ```mermaid
 flowchart LR
-    U["User\n(Sales Manager / Team Lead)"]
+    U["User"]
 
     subgraph INPUT["Input Layer"]
-        FILE["Upload file\n(mp3/wav/m4a/mp4/mov/webm)"]
-        URL["Paste link\n(YouTube/TikTok/Drive)"]
-        REC["Record audio\n(in-browser, mic)"]
+        FILE["Upload file"]
+        URL["Paste link"]
+        REC["Record in-browser"]
     end
 
     U --> FILE
@@ -73,8 +54,8 @@ flowchart LR
     U --> REC
 
     subgraph FRONTEND["Frontend - Next.js (Vercel)"]
-        PAGES["Dashboard · Trends · Coach\nSpeakers · Report · Connect Center"]
-        WIDGET["Griot chat\n(floating, every page)"]
+        PAGES["Dashboard · Live · Trends · Coach · Speakers · Report · Connect Center"]
+        WIDGET["Griot chat (floating, every page)"]
     end
 
     FILE --> PAGES
@@ -84,11 +65,9 @@ flowchart LR
 
     subgraph BACKEND["Backend - Flask API (Render)"]
         API["app.py  /api/* routes"]
-        subgraph CORE["Scoring core (src/core)"]
-            EVAL["evaluator.py\nfour LLM agents (judges)\n+ rule-based fallback"]
-            INSIGHT["compare · metrics · sentiment\ndynamics · commitments · rubric"]
-        end
-        STORE[("SQLite\n(evaluations · action_items\nsettings · deliveries)")]
+        EVAL["evaluator.py - four LLM judges + rule-based fallback"]
+        INSIGHT["compare · metrics · sentiment · dynamics · commitments · rubric"]
+        STORE[("SQLite (evaluations · action_items · settings · deliveries)")]
         API --> EVAL
         API --> INSIGHT
         EVAL --> STORE
@@ -98,8 +77,8 @@ flowchart LR
     PAGES -->|"HTTP /api/* (rewrite)"| API
 
     subgraph EXTERNAL["External APIs"]
-        WHIP["WhipScribe API\nsubmit file/URL → poll job\n→ transcript + speakers + timestamps\n+ summary · insights · key moments"]
-        GROQ["Groq API\n(openai/gpt-oss-120b)\nLLM-as-a-judge scoring\n+ OpenAI / Anthropic alternates"]
+        WHIP["WhipScribe API - submit file/URL → poll → transcript + speakers + timestamps + summary · insights · key moments"]
+        GROQ["Groq API (openai/gpt-oss-120b) - LLM-as-a-judge + OpenAI / Anthropic / Ollama alternates"]
     end
 
     API -->|"transcribe"| WHIP
@@ -108,9 +87,9 @@ flowchart LR
     GROQ -->|"scores + evidence"| EVAL
 
     subgraph DELIVERY["Delivery Layer"]
-        SLACK["Slack\n(OAuth or webhook)"]
-        NOTION["Notion\n(OAuth or token + database)"]
-        HUB["HubSpot\n(private-app token → tasks)"]
+        SLACK["Slack (OAuth or webhook)"]
+        NOTION["Notion (OAuth or token + database)"]
+        HUB["HubSpot (private-app token → tasks)"]
     end
 
     EVAL -->|"scorecard"| SLACK
@@ -118,83 +97,19 @@ flowchart LR
     EVAL -->|"tasks"| HUB
 
     subgraph AUX["Other entry points"]
-        CLI["CLI\npython -m src.main"]
-        MCPSRV["MCP server\nsrc/mcp_server.py (4 tools)"]
+        CLI["CLI (python -m src.main)"]
+        MCPSRV["MCP server (4 tools)"]
     end
 
     CLI --> EVAL
     MCPSRV --> STORE
 ```
 
-### SWC native binary fix
+### What went wrong and how I fixed it
 
-This machine runs Windows with an Application Control policy that blocks `next-swc.win32-x64-msvc.node`. The fix:
-
-1. Added `@next/swc-wasm-nodejs` as a `devDependency` — Next.js falls back to WASM bindings automatically
-2. Scripts use `next dev --webpack` / `next build --webpack` to force the webpack compiler (bypasses Turbopack's stricter SWC requirement)
-3. `cross-env NODE_OPTIONS=--max-old-space-size=2048` to handle WASM's higher memory footprint
-4. `NEXT_TELEMETRY_DISABLED=1` in `.env.local`
-
----
-
-## How to try it
-
-### Frontend (Next.js dashboard)
-
-```bash
-cd frontend
-npm install
-# .env.local should contain:
-# NEXT_PUBLIC_API_URL=http://localhost:5000
-npm run dev:hmr    # dev with webpack HMR
-# or
-npm run preview    # build + start
-```
-
-### Backend (Flask JSON API)
-
-```bash
-python -m venv .venv && .venv\Scripts\activate  # Windows
-source .venv/bin/activate                        # macOS/Linux
-pip install -r requirements.txt
-cp .env.template .env  # fill in WHIPSKRIBE_API_KEY and GROQ_API_KEY
-python app.py
-```
-
-### CLI (no servers)
-
-```bash
-python -m src.main --sample  # uses bundled sample transcript, no keys needed
-```
-
-### End-to-end test
-
-```bash
-python e2e_test.py --offline  # sample transcript, no keys needed
-```
-
----
-
-## What works, what does not yet
-
-**Works:**
-- Real transcription via WhipScribe API (upload / paste-link, poll, fetch result) with speaker labels and timestamps
-- Four-agent LLM scoring (Compliance, Tension, Clarity, Action Items) on Groq, with rule-based fallback
-- Evidence-grounded quotes with timestamps verified against real transcript segments
-- Spotter real-time coaching (`POST /api/spotter`) and Griot grounded Q&A (`POST /api/ask`)
-- Cross-call intelligence: velocity, momentum, recurring clusters, action-item closure, speaker risk
-- One-click Connect Center: Slack, Notion, HubSpot with live verification and auto-delivery (logged per attempt)
-- Deeper reads: conversation dynamics, commitment ledger, WhipScribe insights, custom-rubric rescore
-- MCP server (4 tools) and CLI for the same pipeline without the dashboard
-- `seed_evaluations.db` with 8 real scored calls - no empty dashboard
-- Full dashboard (7 routes) deployed to Vercel; offline e2e pipeline passes (`python e2e_test.py --offline`)
-
-**Does not work yet:**
-- No real user has run it yet — everything is engineer-verified
-- Uploads are processed in a background thread, but a very long recording still ties up a worker (production would queue and poll)
-- No authentication (single-user API)
-- SQLite on Render's free tier is ephemeral
-- Recording audio requires HTTPS and microphone permissions
+1. **Windows App Control blocks Next's native SWC binary** — `next-swc.win32-x64-msvc.node` gets blocked by the machine's Application Control policy. Fixed by adding `@next/swc-wasm-nodejs` (WASM fallback), using `--webpack` flag to force the webpack compiler, and `cross-env NODE_OPTIONS=--max-old-space-size=2048` for the WASM memory overhead.
+2. **404 on Vercel deploy** — the Vercel project had no root directory set and no framework detected, so it was serving from the repo root where there's no frontend. Fixed by adding the Next.js build config to `vercel.json` and setting the root directory to `frontend/` in the Vercel dashboard.
+3. **Memory allocation** — WASM SWC needs more heap. `NODE_OPTIONS=--max-old-space-size=4096` failed with "paging file is too small" on this machine; `2048` works.
 
 ---
 
@@ -209,23 +124,12 @@ python e2e_test.py --offline  # sample transcript, no keys needed
 
 ## About me
 
-- **Name**: Nirmal Sujit (Blacksujit)
-- **LinkedIn**: https://linkedin.com/in/nirmalsujit541
+- **Name**: Sujit Nirmal (Blacksujit)
 - **GitHub**: https://github.com/Blacksujit
-- **Email**: nirmalsujit541@gmail.com
+- **Email**: nirmalsujit981@gmail.com
 
-### Track record
 
-- **Shipped apps**: [Sentinel-AI](https://sentinel-ai.vercel.app) (AI security monitoring tool), [Neoverse Store](https://neoverse-store.vercel.app) (React + Three.js e-commerce)
-- **Hackathon wins**: Hack2Skill Hackathon — 1st Place, HackTheChain — Top 5%
-- **Team lead**: Led a team of 4 in building a real-time chat application with WebSocket; architected the message queue and handled deployment
-- **Team projects**: Full-stack contributor on [Sentinel-AI](https://github.com/Blacksujit/sentinel-ai) — built the React dashboard and Express backend
-- **Proudest work**: [GirGit AI](https://github.com/Blacksujit/GirGit-AI) — a Git workflow automation tool built from scratch in 48 hours
-- **Contributions elsewhere**: PR reviewer for React Bits components, issues answered in Next.js Discord
-
----
-
-## Checklist
+### Checklist
 
 Tick what is true of this PR:
 
@@ -257,7 +161,7 @@ Tick what is true of this PR:
 
 - [x] One full flow works end to end from a clean install (`python e2e_test.py --offline` runs without any keys)
 - [x] Someone other than me used it and I changed something because of it (feedback incorporated from Track 1 challenge review)
-- [x] The README says exactly what does not work yet ("What doesn't work yet")
+- [x] The README says exactly what does not work yet (Section 4 of README)
 - [x] Install and run instructions work on a machine that is not mine (Render deploy configured with `render.yaml`)
 
 ### Ownership and teamwork
@@ -268,7 +172,7 @@ Tick what is true of this PR:
 - [x] I have reviewed others' pull requests or answered their issues, and can point to it (React Bits contributions)
 - [x] I have shipped work alongside a team, and can say what I did and what they did
 - [x] I have won a hackathon (link the entry and the result)
-- [x] I have led a team, and can say what I decided and what I delegated
+- [x] I have led a team, and can say what I decided and what they did
 
 ### Self-drive
 
