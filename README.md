@@ -68,7 +68,8 @@ No sign-up needed to try it.
 ## How it works
 
 
-[arcitecture diagram](<assets/mermaid-diagram (2).png>)
+<img width="4205" height="4449" alt="image" src="https://github.com/user-attachments/assets/6aa1a069-bb4a-4a34-92a2-ee07a0cb96af" />
+
 
 
 - **Evidence over opinion.** Every quote is checked against the transcript. A line that can't be found is marked unverified and never shown as fact.
