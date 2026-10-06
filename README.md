@@ -55,6 +55,10 @@ See whether your calls are trending up or down, and which issues keep coming bac
 
 Every new scorecard goes to **Slack**, **Notion** or **HubSpot** automatically. Each connection is tested with a real message, page or task before it's saved.
 
+### From your terminal, or from your AI assistant
+
+Score a recording without opening the app. The CLI turns a file, a link or an existing WhipScribe job into a Markdown scorecard, or compares several calls into a trend report. It can run on a local model through Ollama. The same features are available to Claude, Cursor and other AI assistants through the CallCoach MCP server ([see below](#command-line)).
+
 ## Try it
 
 1. Open **[Live app](https://callcoachai.sujit.top/)**.
@@ -93,7 +97,65 @@ BACKEND_URL=http://localhost:5000 npm run dev:hmr
 python -m pytest -q          # 139 tests, run offline, no keys needed
 ```
 
-Stack: Next.js · Flask · SQLite · WhipScribe API + MCP · Groq / OpenAI / Anthropic.
+Stack: Next.js · Flask · SQLite · WhipScribe API + MCP · Groq / OpenAI / Anthropic / Ollama.
+
+## Command line
+
+Same pipeline as the app, no browser needed. Run it from the project root after `pip install -r requirements.txt`.
+
+```bash
+# Try it with no keys at all: scores a built-in sample call
+python -m src.main --sample
+
+# Score your own recording: a local file or a link
+python -m src.main --file pitch-call.mp3 --language en
+python -m src.main --url "https://example.com/investor-call.mp3"
+
+# Re-score a call already on WhipScribe
+python -m src.main --job-id <whipscribe-job-id>
+
+# Compare several calls: is the pitch getting better?
+python -m src.main --compare <job1>,<job2>,<job3>
+```
+
+| Option | What it does |
+|---|---|
+| `--output report.md` | Where to write the scorecard (Markdown; `report.md` by default) |
+| `--provider groq\|openai\|anthropic\|ollama` | Which AI reviews the call. `ollama` keeps everything on your machine |
+| `--model <name>` | Pick a specific model |
+| `--deliver notion` | Also send the scorecard to your Notion database |
+| `--language en` | Language hint for transcription |
+
+Uploads and job lookups need `WHIPSCRIBE_API_KEY` in `.env`. `--sample` needs nothing.
+
+### Use CallCoach from Claude, Cursor or any MCP client
+
+CallCoach ships its own MCP server, so an AI assistant can score calls and read your trends for you.
+
+```bash
+pip install "mcp>=2"
+python src/mcp_server.py      # runs over stdio
+```
+
+Add it to your assistant's MCP config (Claude Desktop, Cursor, …):
+
+```json
+{
+  "mcpServers": {
+    "callcoach": {
+      "command": "python",
+      "args": ["/path/to/callcoach-ai-whhipscribe/src/mcp_server.py"]
+    }
+  }
+}
+```
+
+| Tool | What you can ask |
+|---|---|
+| `analyze_meeting` | "Score the call with job ID …" |
+| `get_deal_velocity` | "Is momentum building across these three calls?" |
+| `get_coaching_insights` | "What keeps going wrong, and are action items getting done?" |
+| `export_meeting_report` | "Send that report to Notion" (or Slack) |
 
 ## What's next
 
