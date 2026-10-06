@@ -133,8 +133,7 @@ Uploads and job lookups need `WHIPSCRIBE_API_KEY` in `.env`. `--sample` needs no
 CallCoach ships its own MCP server, so an AI assistant can score calls and read your trends for you.
 
 ```bash
-pip install "mcp>=2"
-python src/mcp_server.py      # runs over stdio
+python src/mcp_server.py      # runs over stdio; installed with requirements.txt
 ```
 
 Add it to your assistant's MCP config (Claude Desktop, Cursor, …):
