@@ -201,14 +201,14 @@ graph TD
 
     subgraph "Backend (Flask + Python)"
         BE_Flask[Flask API Server]
-        BE_Eval[Evaluator Engine (multi-agent)]
-        BE_Metrics[Metrics Engine (velocity, trends)]
+        BE_Eval["Evaluator Engine (multi-agent)"]
+        BE_Metrics["Metrics Engine (velocity, trends)"]
         BE_Store[SQLite Persistence]
     end
 
     subgraph "External APIs"
         WS_API[WhipScribe API]
-        LLM[GROQ (default) / OpenAI / Anthropic]
+        LLM["GROQ (default) / OpenAI / Anthropic"]
         Notion_API[Notion API]
         Slack_API[Slack API]
     end
@@ -235,7 +235,7 @@ graph LR
     subgraph "Adapters (Frameworks)"
         WebUI[Next.js Frontend]
         WhipAPI[WhipScribe API Client]
-        LLM_Client[LLM Client (OpenAI/Anthropic)]
+        LLM_Client["LLM Client (OpenAI/Anthropic)"]
     end
 
     subgraph "Application Services"
@@ -245,10 +245,10 @@ graph LR
     end
 
     subgraph "Domain (Entities)"
-        Eval_Entity[Evaluation: {score, issues, items}]
-        Trend_Entity[Trend: {velocity, momentum, slope}]
-        Coaching_Entity[CoachingInsight: {advice, evidence}]
-        ActionItem_Entity[ActionItem: {text, owner, status}]
+        Eval_Entity["Evaluation: {score, issues, items}"]
+        Trend_Entity["Trend: {velocity, momentum, slope}"]
+        Coaching_Entity["CoachingInsight: {advice, evidence}"]
+        ActionItem_Entity["ActionItem: {text, owner, status}"]
     end
 
     subgraph "External"
