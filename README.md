@@ -72,7 +72,107 @@ No sign-up needed to try it.
 ## How it works
 
 
-<img width="4205" height="4449" alt="image" src="https://github.com/user-attachments/assets/6aa1a069-bb4a-4a34-92a2-ee07a0cb96af" />
+```mermaid
+flowchart TD
+    USER("👤 Sales Manager / Team Lead")
+    FE("Next.js Frontend<br/>Dashboard · Live · Trends ·<br/>Coach · Reports · Connect Center")
+    GRIOT("Griot AI<br/>Floating Assistant")
+    FLASK("Flask API<br/>/api/*")
+    ROUTES("API Routes<br/>Calls · Analysis · Reports ·<br/>Trends · Integrations")
+    ORCH("Analysis Orchestrator<br/>Controls Processing")
+    INGEST("Ingestion<br/>Validate · Normalize")
+    WHIP("WhipScribe API<br/>Transcription · Speakers ·<br/>Timestamps")
+    TRANSCRIPT("Structured Transcript<br/>Speakers · Timestamps ·<br/>Metadata")
+    DEV("Developer Interfaces")
+    CLI("CLI<br/>python -m src.main")
+    MCP("MCP Server<br/>4 Tools")
+    SCORING("AI Scoring Engine")
+    FALLBACK("Rule-Based Fallback")
+    A1("Agent 1<br/>Call Quality")
+    A2("Agent 2<br/>Sales Skills")
+    A3("Agent 3<br/>Objection Handling")
+    A4("Agent 4<br/>Closing / Compliance")
+    AGG("Score Aggregator<br/>Scores · Evidence · Rules")
+    LLM("LLM-as-a-Judge<br/>Groq · GPT-OSS-120B<br/>OpenAI / Anthropic")
+    INSIGHT("Insight Engine")
+    XCALL("Cross-Call Comparison")
+    COMMIT("Commitments / Action<br/>Items")
+    DYN("Conversation Dynamics")
+    SENT("Sentiment")
+    METRICS("Metrics")
+    ACTIONS("Action Items")
+    REPORT("Evidence-Backed Report<br/>Scores · Evidence · Summary<br/>· Actions")
+    DELIVERY("Delivery Layer")
+    HUBSPOT("HubSpot<br/>Tasks / Follow-ups")
+    NOTION("Notion<br/>Summary + Report")
+    SLACK("Slack<br/>Summary + Alerts")
+    DB[("Application Database<br/>Calls · Scores · Reports<br/>Actions · Settings · Deliveries")]
+    TRENDS("Cross-Call Trends")
+    DASH("Dashboard / Reports")
+    COACH("Coaching Insights")
+
+    USER --> FE
+    FE --> FLASK
+    FE --> GRIOT
+    GRIOT --> FLASK
+    FLASK --> ROUTES
+    FLASK --> DEV
+    DEV --> CLI
+    DEV --> MCP
+    ROUTES --> ORCH
+    ORCH --> INGEST
+    INGEST --> WHIP
+    WHIP --> TRANSCRIPT
+    TRANSCRIPT --> SCORING
+    TRANSCRIPT --> INSIGHT
+
+    SCORING --> A1
+    SCORING --> A2
+    SCORING --> A3
+    SCORING --> A4
+    SCORING -.-> FALLBACK
+
+    A1 <--> LLM
+    A2 <--> LLM
+    A3 <--> LLM
+    A4 <--> LLM
+
+    A1 --> AGG
+    A2 --> AGG
+    A3 --> AGG
+    A4 --> AGG
+    FALLBACK -.-> AGG
+
+    AGG --> REPORT
+
+    INSIGHT --> XCALL
+    INSIGHT --> COMMIT
+    INSIGHT --> DYN
+    INSIGHT --> SENT
+    INSIGHT --> METRICS
+    INSIGHT --> DB
+    COMMIT --> ACTIONS
+    ACTIONS --> HUBSPOT
+
+    REPORT --> DELIVERY
+    REPORT --> DB
+    DELIVERY --> HUBSPOT
+    DELIVERY --> NOTION
+    DELIVERY --> SLACK
+
+    DB --> TRENDS
+    DB --> DASH
+    TRENDS --> COACH
+
+    classDef primary fill:#123a63,stroke:#2b5d8f,color:#ffffff,stroke-width:1px
+    classDef secondary fill:#2c3e55,stroke:#4a6078,color:#ffffff,stroke-width:1px
+    classDef store fill:#134e4a,stroke:#2f7f78,color:#ffffff,stroke-width:1px
+
+    class USER,FE,GRIOT,FLASK,ROUTES,DEV,ORCH,INGEST,TRANSCRIPT,SCORING,A1,A2,A3,A4,AGG,REPORT,ACTIONS,TRENDS,DASH,COACH primary
+    class CLI,MCP,WHIP,FALLBACK,LLM,INSIGHT,XCALL,COMMIT,DYN,SENT,METRICS,DELIVERY,HUBSPOT,NOTION,SLACK secondary
+    class DB store
+    linkStyle default stroke:#5b6b7f,stroke-width:1.2px
+```
 
 
 
